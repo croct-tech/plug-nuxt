@@ -2,7 +2,7 @@ import {test, expect} from '@playwright/test';
 
 test.describe('CSR useEvaluation', () => {
     test('should render initial value then hydrate with real result', async ({page}) => {
-        await page.goto('/csr/use-evaluation/valid');
+        await page.goto('/csr/use-evaluation/valid', {waitUntil: 'commit'});
 
         await expect(page.getByTestId('result')).toHaveText('loading...');
         await expect(page.getByTestId('result')).toHaveText('2026-01-01T00:00:00.000000', {timeout: 10000});

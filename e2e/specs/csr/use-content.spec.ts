@@ -2,7 +2,7 @@ import {test, expect} from '@playwright/test';
 
 test.describe('CSR useContent', () => {
     test('should render initial value then hydrate with real content', async ({page}) => {
-        await page.goto('/csr/use-content/valid');
+        await page.goto('/csr/use-content/valid', {waitUntil: 'commit'});
 
         await expect(page.getByTestId('headline')).toHaveText('Loading...');
         await expect(page.getByTestId('headline')).toHaveText('Mock Headline', {timeout: 10000});
