@@ -6,7 +6,6 @@ import {
     addServerImportsDir,
     createResolver,
 } from '@nuxt/kit';
-import type {Nuxt} from 'nuxt/schema';
 import type {CroctModuleOptions} from './types';
 
 const DEFAULT_CLIENT_ID_COOKIE_DURATION = 365 * 24 * 60 * 60;
@@ -28,7 +27,7 @@ export default defineNuxtModule<CroctModuleOptions>({
         disableUserTokenAuthentication: false,
         tokenDuration: DEFAULT_TOKEN_DURATION,
     },
-    setup: function (options: CroctModuleOptions, nuxt: Nuxt) {
+    setup: function (options, nuxt) {
         const resolver = createResolver(import.meta.url);
 
         const cookieConfig = {
@@ -111,8 +110,6 @@ export default defineNuxtModule<CroctModuleOptions>({
                 .push('@croct/plug-vue');
         }
 
-        nuxt.options.nitro = nuxt.options.nitro ?? {};
-        nuxt.options.nitro.experimental = nuxt.options.nitro.experimental ?? {};
-        nuxt.options.nitro.experimental.asyncContext = true;
+        nuxt.options.experimental.asyncContext = true;
     },
 });

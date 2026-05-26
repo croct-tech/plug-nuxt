@@ -68,11 +68,6 @@ declare module 'nuxt/schema' {
 
     interface NuxtOptions {
         croct?: CroctModuleOptions;
-        nitro?: {
-            experimental?: {
-                asyncContext?: boolean,
-            },
-        };
     }
 }
 

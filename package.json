@@ -47,7 +47,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest watch",
-    "validate": "nuxi typecheck"
+    "validate": "tsc --noEmit"
   },
   "peerDependencies": {
     "nuxt": "^3.0.0"
