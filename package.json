@@ -40,6 +40,7 @@
     "url": "git+https://github.com/croct-tech/plug-nuxt.git"
   },
   "scripts": {
+    "prepare": "nuxi prepare e2e/app",
     "prepack": "nuxt-module-build build",
     "dev": "nuxi dev e2e/app",
     "dev:build": "nuxi build e2e/app",
@@ -47,7 +48,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest watch",
-    "validate": "nuxi prepare e2e/app && tsc --noEmit"
+    "validate": "tsc --noEmit"
   },
   "peerDependencies": {
     "nuxt": "^3.0.0"
