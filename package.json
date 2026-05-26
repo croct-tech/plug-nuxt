@@ -47,7 +47,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest watch",
-    "validate": "tsc --noEmit"
+    "validate": "nuxi prepare e2e/app && tsc --noEmit"
   },
   "peerDependencies": {
     "nuxt": "^3.0.0"
