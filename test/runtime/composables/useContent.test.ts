@@ -3,7 +3,7 @@ import {registerEndpoint} from '@nuxt/test-utils/runtime';
 import {readBody} from 'h3';
 import type {H3Event} from 'h3';
 import {useRuntimeConfig} from '#app';
-import {useContent} from './useContent';
+import {useContent} from '../../../src/runtime/composables/useContent';
 
 describe('useContent', () => {
     const config = useRuntimeConfig();

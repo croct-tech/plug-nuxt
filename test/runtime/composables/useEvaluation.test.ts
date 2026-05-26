@@ -1,6 +1,6 @@
 import {describe, it, expect} from 'vitest';
 import {registerEndpoint} from '@nuxt/test-utils/runtime';
-import {useEvaluation} from './useEvaluation';
+import {useEvaluation} from '../../../src/runtime/composables/useEvaluation';
 
 describe('useEvaluation', () => {
     it('should evaluate a query via the internal API route', async () => {

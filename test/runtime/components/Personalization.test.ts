@@ -1,6 +1,6 @@
 import {describe, it, expect} from 'vitest';
 import {mountSuspended, registerEndpoint} from '@nuxt/test-utils/runtime';
-import Personalization from './Personalization';
+import Personalization from '../../../src/runtime/components/Personalization';
 
 describe('Personalization', () => {
     it('should render the evaluation result', async () => {

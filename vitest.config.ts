@@ -9,13 +9,10 @@ export default defineVitestConfig({
                 domEnvironment: 'happy-dom',
             },
         },
-        include: ['src/**/*.test.ts'],
+        include: ['test/**/*.test.ts'],
         coverage: {
             include: ['src/**/*.ts'],
-            exclude: [
-                'src/**/*.test.ts',
-                'src/types.ts',
-            ],
+            exclude: ['src/types.ts'],
         },
     },
 });

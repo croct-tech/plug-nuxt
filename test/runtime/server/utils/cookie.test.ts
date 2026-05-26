@@ -4,7 +4,7 @@ import {Socket} from 'net';
 import {createEvent} from 'h3';
 import {Token} from '@croct/sdk/token';
 import {useRuntimeConfig} from '#imports';
-import {setUserTokenCookie, getProductionDefaults} from './cookie';
+import {setUserTokenCookie, getProductionDefaults} from '../../../../src/runtime/server/utils/cookie';
 
 describe('cookie', () => {
     const config = useRuntimeConfig();

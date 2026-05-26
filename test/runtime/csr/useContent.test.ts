@@ -1,7 +1,7 @@
 import {describe, it, expect, afterEach, vi} from 'vitest';
 import {useContent as useContentVue} from '@croct/plug-vue';
 import {useRuntimeConfig, useNuxtApp} from '#app';
-import {useContent} from './useContent';
+import {useContent} from '../../../src/runtime/csr/useContent';
 
 vi.mock(
     '@croct/plug-vue',

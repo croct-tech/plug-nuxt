@@ -14,7 +14,7 @@
                 <NuxtLink to="/ssr/use-evaluation/invalid">invalid</NuxtLink>
             </li>
             <li>
-                SlotContent:
+                Slot:
                 <NuxtLink to="/ssr/slot-content/valid">valid</NuxtLink> |
                 <NuxtLink to="/ssr/slot-content/invalid">invalid</NuxtLink> |
                 <NuxtLink to="/ssr/slot-content/fallback">fallback</NuxtLink>
@@ -41,7 +41,7 @@
                 <NuxtLink to="/csr/use-evaluation/fallback">fallback</NuxtLink>
             </li>
             <li>
-                SlotContent:
+                Slot:
                 <NuxtLink to="/csr/slot-content/valid">valid</NuxtLink> |
                 <NuxtLink to="/csr/slot-content/fallback">fallback</NuxtLink>
             </li>

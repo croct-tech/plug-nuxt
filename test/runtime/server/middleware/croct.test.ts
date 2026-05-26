@@ -5,7 +5,7 @@ import {Socket} from 'net';
 import {Token} from '@croct/sdk/token';
 import {ApiKey} from '@croct/sdk/apiKey';
 import {useRuntimeConfig} from '#imports';
-import handler from './croct';
+import handler from '../../../../src/runtime/server/middleware/croct';
 
 async function handleRequest(event: ReturnType<typeof createEvent>): Promise<void> {
     return (handler as (event: ReturnType<typeof createEvent>) => Promise<void>)(event);

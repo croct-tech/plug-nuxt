@@ -1,6 +1,11 @@
 import {describe, it, expect, beforeEach, afterEach} from 'vitest';
 import {useRuntimeConfig} from '#imports';
-import {getApiKey, getAuthenticationKey, isUserTokenAuthenticationEnabled, issueToken} from './security';
+import {
+    getApiKey,
+    getAuthenticationKey,
+    isUserTokenAuthenticationEnabled,
+    issueToken,
+} from '../../../../src/runtime/server/utils/security';
 
 describe('security', () => {
     const identifier = '00000000-0000-0000-0000-000000000000';

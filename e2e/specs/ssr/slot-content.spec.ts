@@ -1,6 +1,6 @@
 import {test, expect} from '@playwright/test';
 
-test.describe('SSR SlotContent', () => {
+test.describe('SSR Slot', () => {
     test('should server-render slot content', async ({page}) => {
         await page.goto('/ssr/slot-content/valid');
 
