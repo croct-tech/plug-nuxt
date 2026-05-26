@@ -2,12 +2,16 @@ import {describe, it, expect} from 'vitest';
 import {mountSuspended, registerEndpoint} from '@nuxt/test-utils/runtime';
 import SlotContent from './SlotContent';
 
-type SlotResponse = {
-    content: {headline: string},
-    metadata?: {version: string},
-};
-
 describe('SlotContent', () => {
+    type SlotResponse = {
+        content: {
+            headline: string,
+        },
+        metadata?: {
+            version: string,
+        },
+    };
+
     it('should render content from the API', async () => {
         registerEndpoint('/api/_croct/content', {
             method: 'POST',
