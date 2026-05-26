@@ -15,6 +15,7 @@ jobs:
   validate:
     uses: croct-tech/shared-public-configs/.github/workflows/javascript-validations.yml@master
     with:
+      node-version: '22'
       use-private-registry: false
 
   e2e:
