@@ -1,0 +1,34 @@
+name: Validate branch
+
+on:
+  push:
+    tags-ignore:
+      - '**'
+    branches:
+      - master
+  pull_request:
+    types:
+      - synchronize
+      - opened
+
+jobs:
+  validate:
+    uses: croct-tech/shared-public-configs/.github/workflows/validate-js-project.yml@master
+    secrets: inherit
+
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npx playwright install --with-deps chromium
+
+      - run: npx playwright test

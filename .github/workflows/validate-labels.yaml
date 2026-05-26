@@ -1,0 +1,14 @@
+name: Validate labels
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - labeled
+      - unlabeled
+
+jobs:
+  validate:
+    uses: croct-tech/shared-public-configs/.github/workflows/validate-pr-labels.yml@master
+    secrets: inherit

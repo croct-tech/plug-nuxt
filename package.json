@@ -1,47 +1,76 @@
 {
-  "name": "@croct/ts-project",
+  "name": "@croct/plug-nuxt",
   "version": "0.0.0-dev",
-  "description": "A brief description about the project.",
+  "description": "Nuxt module to plug your Nuxt 3 applications into Croct.",
   "author": {
     "name": "Croct",
-    "email": "lib+project-ts@croct.com",
-    "url": "https://github.com/croct-tech/project-ts"
+    "url": "https://croct.com",
+    "email": "lib+plug-nuxt@croct.com"
   },
-  "license": "UNLICENSED",
+  "license": "MIT",
   "keywords": [
     "croct",
     "personalization",
+    "nuxt",
+    "vue",
     "typescript"
   ],
-  "types": "index.d.ts",
-  "main": "index.js",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/types.d.ts",
+      "import": "./dist/module.mjs",
+      "require": "./dist/module.cjs"
+    },
+    "./csr": {
+      "types": "./dist/runtime/csr/index.d.ts",
+      "import": "./dist/runtime/csr/index.js"
+    },
+    "./runtime/*": "./dist/runtime/*"
+  },
+  "main": "./dist/module.cjs",
+  "types": "./dist/types.d.ts",
+  "files": [
+    "dist"
+  ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/croct-tech/project-ts.git"
+    "url": "git+https://github.com/croct-tech/plug-nuxt.git"
   },
-  "bugs": {
-    "url": "https://github.com/croct-tech/project-ts/issues"
-  },
-  "homepage": "https://github.com/croct-tech/project-ts",
   "scripts": {
-    "lint": "eslint 'src/**/*.ts' 'test/**/*.ts'",
-    "test": "jest -c jest.config.js --coverage",
-    "validate": "tsc --noEmit",
-    "build": "tsc -p tsconfig.build.json"
+    "prepack": "nuxt-module-build build",
+    "dev": "nuxi dev e2e/app",
+    "dev:build": "nuxi build e2e/app",
+    "build": "nuxt-module-build build",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest watch",
+    "validate": "nuxi typecheck"
+  },
+  "peerDependencies": {
+    "nuxt": "^3.0.0"
+  },
+  "dependencies": {
+    "@croct/plug": "^0.23.0",
+    "@croct/plug-vue": "file:../plug-vue/build",
+    "@croct/sdk": "^0.22.0",
+    "@nuxt/kit": "^3.17.5"
   },
   "devDependencies": {
-    "@croct/eslint-plugin": "^0.8.0",
-    "@swc/jest": "^0.2.24",
-    "@types/jest": "^30.0.0",
-    "@typescript-eslint/parser": "^8.0.0",
-    "eslint": "^10.0.0",
-    "jest": "^30.0.0",
-    "jest-extended": "^7.0.0",
-    "ts-node": "^10.8.2",
-    "typescript": "^6.0.0"
-  },
-  "files": [
-    "**/*.js",
-    "**/*.ts"
-  ]
+    "@croct/eslint-plugin": "^0.9.2",
+    "@nuxt/module-builder": "^0.8.4",
+    "@nuxt/test-utils": "^3.18.0",
+    "@playwright/test": "^1.60.0",
+    "@types/node": "^25.9.1",
+    "@vitest/coverage-v8": "^3.2.4",
+    "@vue/test-utils": "^2.4.10",
+    "eslint": "^9.0.0",
+    "happy-dom": "^20.9.0",
+    "nuxt": "^3.17.5",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.22.3",
+    "typescript": "^5.6.2",
+    "vitest": "^3.2.3",
+    "vue": "^3.5.0"
+  }
 }
