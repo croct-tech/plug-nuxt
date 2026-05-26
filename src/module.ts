@@ -6,7 +6,6 @@ import {
     addServerImportsDir,
     createResolver,
 } from '@nuxt/kit';
-import type {Nuxt, ComponentsDir} from '@nuxt/schema';
 import type {CroctModuleOptions} from './types';
 
 const DEFAULT_CLIENT_ID_COOKIE_DURATION = 365 * 24 * 60 * 60;
@@ -28,7 +27,7 @@ export default defineNuxtModule<CroctModuleOptions>({
         disableUserTokenAuthentication: false,
         tokenDuration: DEFAULT_TOKEN_DURATION,
     },
-    setup: function (options: CroctModuleOptions, nuxt: Nuxt) {
+    setup: function (options, nuxt) {
         const resolver = createResolver(import.meta.url);
 
         const cookieConfig = {
@@ -87,7 +86,7 @@ export default defineNuxtModule<CroctModuleOptions>({
             handler: resolver.resolve('./runtime/server/api/_croct/evaluate.post'),
         });
 
-        nuxt.hook('components:dirs', (dirs: Array<string | ComponentsDir>) => {
+        nuxt.hook('components:dirs', dirs => {
             dirs.push({
                 path: resolver.resolve('./runtime/components'),
                 prefix: '',
