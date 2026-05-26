@@ -10,5 +10,9 @@ on:
 
 jobs:
   validate:
-    uses: croct-tech/shared-public-configs/.github/workflows/validate-pr-labels.yml@master
-    secrets: inherit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: docker://agilepathway/pull-request-label-checker:latest
+        with:
+          any_of: maintenance,feature,bug,enhancement
+          repo_token: ${{ secrets.GITHUB_TOKEN }}

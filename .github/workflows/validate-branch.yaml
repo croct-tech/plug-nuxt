@@ -13,8 +13,9 @@ on:
 
 jobs:
   validate:
-    uses: croct-tech/shared-public-configs/.github/workflows/validate-js-project.yml@master
-    secrets: inherit
+    uses: croct-tech/shared-public-configs/.github/workflows/javascript-validations.yml@master
+    with:
+      use-private-registry: false
 
   e2e:
     runs-on: ubuntu-latest
