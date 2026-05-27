@@ -1,16 +1,21 @@
-import {describe, it, expect, afterEach} from 'vitest';
+import {describe, it, expect, afterEach, vi} from 'vitest';
 import {registerEndpoint} from '@nuxt/test-utils/runtime';
 import {readBody} from 'h3';
 import type {H3Event} from 'h3';
-import {useRuntimeConfig} from '#app';
 import {useContent} from '../../../src/runtime/composables/useContent';
 
-describe('useContent', () => {
-    const config = useRuntimeConfig();
-    const originalLocale = config.public.croct.defaultPreferredLocale;
+import {resolveLocale} from '../../../src/runtime/utils/locale';
 
+vi.mock(
+    '../../../src/runtime/utils/locale',
+    () => ({
+        resolveLocale: vi.fn(),
+    }),
+);
+
+describe('useContent', () => {
     afterEach(() => {
-        config.public.croct.defaultPreferredLocale = originalLocale;
+        vi.resetAllMocks();
     });
 
     type ContentResponse = {
@@ -22,7 +27,9 @@ describe('useContent', () => {
         },
     };
 
-    it('should fetch content via the internal API route', async () => {
+    it('should fetch content from the server', async () => {
+        vi.mocked(resolveLocale).mockReturnValue(undefined);
+
         registerEndpoint('/api/_croct/content', {
             method: 'POST',
             handler: (): ContentResponse => ({
@@ -40,8 +47,8 @@ describe('useContent', () => {
         expect(data.value.content.headline).toBe('SSR Content');
     });
 
-    it('should use the explicit preferred locale over the default', async () => {
-        config.public.croct.defaultPreferredLocale = 'pt-BR';
+    it('should include the resolved locale in the request', async () => {
+        vi.mocked(resolveLocale).mockReturnValue('pt-br');
 
         let receivedLocale: string | undefined;
 
@@ -51,45 +58,18 @@ describe('useContent', () => {
                 receivedLocale = (await readBody(event)).preferredLocale;
 
                 return {
-                    content: {
-                        headline: 'Localized',
-                    },
-                };
-            },
-        });
-
-        await useContent('home-hero', {
-            preferredLocale: 'en',
-        });
-
-        expect(receivedLocale).toBe('en');
-    });
-
-    it('should fall back to the default locale from config', async () => {
-        config.public.croct.defaultPreferredLocale = 'pt-BR';
-
-        let receivedLocale: string | undefined;
-
-        registerEndpoint('/api/_croct/content', {
-            method: 'POST',
-            handler: async (event: H3Event): Promise<ContentResponse> => {
-                receivedLocale = (await readBody(event)).preferredLocale;
-
-                return {
-                    content: {
-                        headline: 'Default Locale',
-                    },
+                    content: {headline: 'Localized'},
                 };
             },
         });
 
         await useContent('home-hero');
 
-        expect(receivedLocale).toBe('pt-BR');
+        expect(receivedLocale).toBe('pt-br');
     });
 
-    it('should not set preferred locale when neither explicit nor default is provided', async () => {
-        config.public.croct.defaultPreferredLocale = '';
+    it('should not include a locale when none is resolved', async () => {
+        vi.mocked(resolveLocale).mockReturnValue(undefined);
 
         let receivedLocale: string | undefined;
 

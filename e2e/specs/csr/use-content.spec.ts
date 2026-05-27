@@ -19,4 +19,11 @@ test.describe('CSR useContent', () => {
 
         await expect(page.getByTestId('headline')).toHaveText('Fallback Headline', {timeout: 10000});
     });
+
+    test('should fetch localized content from the i18n locale', async ({page}) => {
+        await page.goto('/pt-br/csr/use-content/valid', {waitUntil: 'commit'});
+
+        await expect(page.getByTestId('headline')).toHaveText('Loading...');
+        await expect(page.getByTestId('headline')).toHaveText('Título Simulado', {timeout: 10000});
+    });
 });

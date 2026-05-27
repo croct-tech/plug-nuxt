@@ -18,6 +18,9 @@ export type CroctModuleOptions = {
     },
     disableUserTokenAuthentication?: boolean,
     tokenDuration?: number,
+    localeResolver?: string,
+    userIdResolver?: string,
+    urlSanitizer?: string,
 };
 
 export type CroctPublicConfig = {

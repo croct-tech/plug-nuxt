@@ -22,4 +22,14 @@ test.describe('server fetchContent', () => {
 
         await expect(page.getByTestId('result')).toContainText('Mock Headline');
     });
+
+    test('should fetch localized content with explicit locale', async ({request}) => {
+        const response = await request.get('/api/content?slotId=home-hero&locale=pt-br');
+
+        expect(response.ok()).toBe(true);
+
+        const data = await response.json();
+
+        expect(data.content.headline).toBe('Título Simulado');
+    });
 });

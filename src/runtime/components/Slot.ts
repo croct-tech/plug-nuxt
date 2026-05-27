@@ -2,7 +2,8 @@ import type {PropType} from 'vue';
 import {defineComponent} from 'vue';
 import type {VersionedSlotId} from '@croct/plug/slot';
 import type {JsonObject} from '@croct/plug/sdk/json';
-import {useAsyncData, useRuntimeConfig} from '#app';
+import {useAsyncData} from '#app';
+import {resolveLocale} from '../utils/locale';
 
 export default defineComponent({
     name: 'Slot',
@@ -25,9 +26,7 @@ export default defineComponent({
         },
     },
     setup: async function (props, {slots}) {
-        const config = useRuntimeConfig();
-        const defaultLocale = config.public.croct.defaultPreferredLocale;
-        const locale = props.preferredLocale ?? (defaultLocale !== '' ? defaultLocale : undefined);
+        const locale = resolveLocale(props.preferredLocale);
 
         const options = {
             ...(props.fallback !== undefined ? {fallback: props.fallback} : {}),

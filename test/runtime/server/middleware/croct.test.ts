@@ -1,11 +1,21 @@
-import {describe, it, expect, afterEach} from 'vitest';
+import {describe, it, expect, afterEach, vi} from 'vitest';
 import {createEvent} from 'h3';
 import {IncomingMessage, ServerResponse} from 'http';
 import {Socket} from 'net';
 import {Token} from '@croct/sdk/token';
 import {ApiKey} from '@croct/sdk/apiKey';
 import {useRuntimeConfig} from '#imports';
+
 import handler from '../../../../src/runtime/server/middleware/croct';
+
+const resolvers = vi.hoisted(
+    () => ({
+        localeResolver: undefined as ((event: any) => any) | undefined,
+        userIdResolver: undefined as ((event: any) => any) | undefined,
+    }),
+);
+
+vi.mock('#croct/resolvers', () => resolvers);
 
 async function handleRequest(event: ReturnType<typeof createEvent>): Promise<void> {
     return (handler as (event: ReturnType<typeof createEvent>) => Promise<void>)(event);
@@ -33,6 +43,8 @@ describe('middleware', () => {
         config.public.croct.defaultPreferredLocale = originalLocale;
         config.croct.apiKey = originalApiKey;
         config.croct.disableUserTokenAuthentication = originalDisableAuth;
+        resolvers.localeResolver = undefined;
+        resolvers.userIdResolver = undefined;
     });
 
     function createMockEvent(
@@ -205,6 +217,23 @@ describe('middleware', () => {
             expect(contextToken.getApplicationId()).toBe(appId);
         });
 
+        it('should replace a token from a different app preserving the resolved user ID', async () => {
+            resolvers.userIdResolver = () => 'user-42';
+
+            const foreignAppId = '11111111-1111-1111-1111-111111111111';
+            const foreignToken = Token.issue(foreignAppId, 'user-42').withDuration(3600);
+            const event = createMockEvent();
+
+            event.node.req.headers.cookie = `ct.user_token=${foreignToken.toString()}`;
+
+            await handleRequest(event);
+
+            const contextToken = Token.parse(event.context.croct!.userToken);
+
+            expect(contextToken.getApplicationId()).toBe(appId);
+            expect(contextToken.isSubject('user-42')).toBe(true);
+        });
+
         it('should replace an unsigned token when authentication is required', async () => {
             config.croct.apiKey = `${appId}:${privateKeyA}`;
             config.croct.disableUserTokenAuthentication = false;
@@ -245,6 +274,192 @@ describe('middleware', () => {
 
             expect(contextToken.isSigned()).toBe(true);
             expect(contextToken.getSubject()).toBe(signedToken.getSubject());
+        });
+    });
+
+    describe('userIdResolver', () => {
+        it('should issue an identified token when resolver returns a user ID', async () => {
+            resolvers.userIdResolver = () => 'user-123';
+
+            const event = createMockEvent();
+
+            await handleRequest(event);
+
+            const token = Token.parse(event.context.croct!.userToken);
+
+            expect(token.isSubject('user-123')).toBe(true);
+        });
+
+        it('should issue an anonymous token when resolver returns null', async () => {
+            resolvers.userIdResolver = () => null;
+
+            const event = createMockEvent();
+
+            await handleRequest(event);
+
+            const token = Token.parse(event.context.croct!.userToken);
+
+            expect(token.isAnonymous()).toBe(true);
+        });
+
+        it('should reissue a token when user ID changes', async () => {
+            const existingToken = Token.issue(appId, 'old-user').withDuration(3600);
+
+            resolvers.userIdResolver = () => 'new-user';
+
+            const event = createMockEvent();
+
+            event.node.req.headers.cookie = `ct.user_token=${existingToken.toString()}`;
+
+            await handleRequest(event);
+
+            const token = Token.parse(event.context.croct!.userToken);
+
+            expect(token.isSubject('new-user')).toBe(true);
+        });
+
+        it('should reissue a token when identified user becomes anonymous', async () => {
+            const existingToken = Token.issue(appId, 'user-123').withDuration(3600);
+
+            resolvers.userIdResolver = () => null;
+
+            const event = createMockEvent();
+
+            event.node.req.headers.cookie = `ct.user_token=${existingToken.toString()}`;
+
+            await handleRequest(event);
+
+            const token = Token.parse(event.context.croct!.userToken);
+
+            expect(token.isAnonymous()).toBe(true);
+        });
+
+        it('should reissue a token when anonymous user becomes identified', async () => {
+            const existingToken = Token.issue(appId).withDuration(3600);
+
+            resolvers.userIdResolver = () => 'user-123';
+
+            const event = createMockEvent();
+
+            event.node.req.headers.cookie = `ct.user_token=${existingToken.toString()}`;
+
+            await handleRequest(event);
+
+            const token = Token.parse(event.context.croct!.userToken);
+
+            expect(token.isSubject('user-123')).toBe(true);
+        });
+
+        it('should keep the token when the user ID matches', async () => {
+            config.croct.apiKey = '';
+
+            const existingToken = Token.issue(appId, 'user-123').withDuration(3600);
+
+            resolvers.userIdResolver = () => 'user-123';
+
+            const event = createMockEvent();
+
+            event.node.req.headers.cookie = `ct.user_token=${existingToken.toString()}`;
+
+            await handleRequest(event);
+
+            const token = Token.parse(event.context.croct!.userToken);
+
+            expect(token.toString()).toBe(existingToken.toString());
+        });
+
+        it('should support async resolvers', async () => {
+            resolvers.userIdResolver = () => Promise.resolve('async-user');
+
+            const event = createMockEvent();
+
+            await handleRequest(event);
+
+            const token = Token.parse(event.context.croct!.userToken);
+
+            expect(token.isSubject('async-user')).toBe(true);
+        });
+
+        it('should pass the H3 event to the resolver', async () => {
+            const resolver = vi.fn().mockReturnValue(null);
+
+            resolvers.userIdResolver = resolver;
+
+            const event = createMockEvent('http://localhost:3000/test');
+
+            await handleRequest(event);
+
+            expect(resolver).toHaveBeenCalledWith(event);
+        });
+    });
+
+    describe('localeResolver', () => {
+        it('should use the locale from the resolver', async () => {
+            resolvers.localeResolver = () => 'pt-br';
+
+            const event = createMockEvent();
+
+            await handleRequest(event);
+
+            expect(event.context.croct!.preferredLocale).toBe('pt-br');
+        });
+
+        it('should fall back to config default when resolver returns null', async () => {
+            config.public.croct.defaultPreferredLocale = 'fr';
+
+            resolvers.localeResolver = () => null;
+
+            const event = createMockEvent();
+
+            await handleRequest(event);
+
+            expect(event.context.croct!.preferredLocale).toBe('fr');
+        });
+
+        it('should fall back to config default when resolver returns empty string', async () => {
+            config.public.croct.defaultPreferredLocale = 'fr';
+
+            resolvers.localeResolver = () => '';
+
+            const event = createMockEvent();
+
+            await handleRequest(event);
+
+            expect(event.context.croct!.preferredLocale).toBe('fr');
+        });
+
+        it('should not set locale when resolver returns null and no config default', async () => {
+            config.public.croct.defaultPreferredLocale = '';
+
+            resolvers.localeResolver = () => null;
+
+            const event = createMockEvent();
+
+            await handleRequest(event);
+
+            expect(event.context.croct!.preferredLocale).toBeUndefined();
+        });
+
+        it('should support async resolvers', async () => {
+            resolvers.localeResolver = () => Promise.resolve('async-locale');
+
+            const event = createMockEvent();
+
+            await handleRequest(event);
+
+            expect(event.context.croct!.preferredLocale).toBe('async-locale');
+        });
+
+        it('should pass the H3 event to the resolver', async () => {
+            const resolver = vi.fn().mockReturnValue('en');
+
+            resolvers.localeResolver = resolver;
+
+            const event = createMockEvent('http://localhost:3000/test');
+
+            await handleRequest(event);
+
+            expect(resolver).toHaveBeenCalledWith(event);
         });
     });
 

@@ -38,6 +38,14 @@ export default defineConfig(
         },
     },
     {
+        files: [
+            'e2e/specs/**/*.spec.ts',
+        ],
+        rules: {
+            '@croct/parameter-destructuring': 'off',
+        },
+    },
+    {
         ignores: [
             'dist/',
             'coverage/',
@@ -45,6 +53,7 @@ export default defineConfig(
             'node_modules/',
             '.nuxt/',
             '*.mjs',
+            '**/*.d.ts',
         ],
     },
 );

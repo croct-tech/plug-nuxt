@@ -16,6 +16,22 @@ const SLOT_CONTENT: Record<string, object> = {
     },
 };
 
+const LOCALIZED_SLOT_CONTENT: Record<string, Record<string, object>> = {
+    'home-hero': {
+        'pt-br': {
+            content: {
+                _component: 'hero@1',
+                headline: 'Título Simulado',
+                tagline: 'Tagline simulada',
+            },
+            metadata: {
+                version: '1.0',
+                contentSource: 'mock',
+            },
+        },
+    },
+};
+
 const EVALUATION_RESULTS: Record<string, unknown> = {
     now: '2026-01-01T00:00:00.000000',
 };
@@ -23,6 +39,7 @@ const EVALUATION_RESULTS: Record<string, unknown> = {
 type Route = (body: Record<string, unknown>, url: URL) => {status: number, data: unknown};
 
 const routes: Record<string, Route> = {
+    track: () => ({status: 200, data: {}}),
     evaluate: body => {
         const query = String(body.query ?? '');
         const result = EVALUATION_RESULTS[query];
@@ -44,7 +61,9 @@ const routes: Record<string, Route> = {
     content: (body, url) => {
         const slotId = String(body.slotId ?? url.searchParams.get('slotId') ?? '');
         const baseSlotId = slotId.split('@')[0];
-        const content = SLOT_CONTENT[baseSlotId];
+        const locale = typeof body.preferredLocale === 'string' ? body.preferredLocale : undefined;
+        const content = (locale !== undefined ? LOCALIZED_SLOT_CONTENT[baseSlotId]?.[locale] : undefined)
+            ?? SLOT_CONTENT[baseSlotId];
 
         if (content !== undefined) {
             return {status: 200, data: content};
@@ -61,16 +80,6 @@ const routes: Record<string, Route> = {
         };
     },
 };
-
-function resolveRoute(pathname: string): Route | null {
-    for (const [name, handler] of Object.entries(routes)) {
-        if (pathname.endsWith(`/${name}`) || pathname.endsWith(`/web/${name}`)) {
-            return handler;
-        }
-    }
-
-    return null;
-}
 
 function handleRequest(request: IncomingMessage, response: ServerResponse): void {
     const url = new URL(request.url ?? '/', `http://${request.headers.host}`);
@@ -108,6 +117,16 @@ function handleRequest(request: IncomingMessage, response: ServerResponse): void
         response.writeHead(status);
         response.end(JSON.stringify(data));
     });
+}
+
+function resolveRoute(pathname: string): Route | null {
+    for (const [name, handler] of Object.entries(routes)) {
+        if (pathname.endsWith(`/${name}`) || pathname.endsWith(`/web/${name}`)) {
+            return handler;
+        }
+    }
+
+    return null;
 }
 
 const server = createServer(handleRequest);

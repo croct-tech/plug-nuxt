@@ -1,9 +1,11 @@
+import {join} from 'path';
 import {
     defineNuxtModule,
     addPlugin,
     addServerHandler,
     addImportsDir,
     addServerImportsDir,
+    addTemplate,
     createResolver,
 } from '@nuxt/kit';
 import type {CroctModuleOptions} from './types';
@@ -63,6 +65,30 @@ export default defineNuxtModule<CroctModuleOptions>({
             tokenDuration: options.tokenDuration ?? DEFAULT_TOKEN_DURATION,
         };
 
+        const appResolver = createResolver(nuxt.options.rootDir);
+        const resolversCode = generateResolversModule(options, appResolver);
+
+        addTemplate({
+            filename: 'croct/resolvers.ts',
+            write: true,
+            getContents: () => resolversCode,
+        });
+
+        const nitroOptions = (nuxt.options as unknown as {nitro: {alias: Record<string, string>}}).nitro;
+
+        nitroOptions.alias = nitroOptions.alias ?? {};
+        nitroOptions.alias['#croct/resolvers'] = join(nuxt.options.buildDir, 'croct/resolvers');
+
+        const clientOptionsCode = generateClientOptionsModule(options, appResolver);
+
+        addTemplate({
+            filename: 'croct/client-options.ts',
+            write: true,
+            getContents: () => clientOptionsCode,
+        });
+
+        nuxt.options.alias['#croct/client-options'] = join(nuxt.options.buildDir, 'croct/client-options');
+
         addPlugin(resolver.resolve('./runtime/plugin.client'));
 
         addServerHandler({
@@ -113,3 +139,39 @@ export default defineNuxtModule<CroctModuleOptions>({
         nuxt.options.experimental.asyncContext = true;
     },
 });
+
+function generateResolversModule(
+    options: CroctModuleOptions,
+    appResolver: ReturnType<typeof createResolver>,
+): string {
+    const lines: string[] = [];
+
+    if (options.localeResolver !== undefined) {
+        lines.push(`export { default as localeResolver } from '${appResolver.resolve(options.localeResolver)}';`);
+    } else {
+        lines.push('export const localeResolver = undefined;');
+    }
+
+    if (options.userIdResolver !== undefined) {
+        lines.push(`export { default as userIdResolver } from '${appResolver.resolve(options.userIdResolver)}';`);
+    } else {
+        lines.push('export const userIdResolver = undefined;');
+    }
+
+    return lines.join('\n');
+}
+
+function generateClientOptionsModule(
+    options: CroctModuleOptions,
+    appResolver: ReturnType<typeof createResolver>,
+): string {
+    const lines: string[] = [];
+
+    if (options.urlSanitizer !== undefined) {
+        lines.push(`export { default as urlSanitizer } from '${appResolver.resolve(options.urlSanitizer)}';`);
+    } else {
+        lines.push('export const urlSanitizer = undefined;');
+    }
+
+    return lines.join('\n');
+}

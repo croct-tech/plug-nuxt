@@ -7,9 +7,11 @@ import {
     deleteCookie,
     getQuery,
 } from 'h3';
+import type {H3Event} from 'h3';
 import {Token} from '@croct/sdk/token';
 import {base64UrlDecode} from '@croct/sdk/base64Url';
 import {useRuntimeConfig} from '#imports';
+import {localeResolver, userIdResolver} from '#croct/resolvers';
 import {setUserTokenCookie, getProductionDefaults} from '../utils/cookie';
 import {getAuthenticationKey, isUserTokenAuthenticationEnabled, issueToken} from '../utils/security';
 import type {CroctRequestContext} from '../../../types';
@@ -39,10 +41,8 @@ export default defineEventHandler(async event => {
     const {cookie} = config.public.croct;
 
     const clientId = resolveClientId(getCookie(event, cookie.clientId.name));
-    const userToken = await resolveUserToken(getCookie(event, cookie.userToken.name));
-    const preferredLocale = config.public.croct.defaultPreferredLocale !== ''
-        ? config.public.croct.defaultPreferredLocale
-        : undefined;
+    const userToken = await resolveUserToken(event, getCookie(event, cookie.userToken.name));
+    const preferredLocale = await resolvePreferredLocale(event, config.public.croct.defaultPreferredLocale);
 
     const previewToken = resolvePreviewToken(
         getQuery(event)[PREVIEW_QUERY_PARAM] as string | undefined,
@@ -98,7 +98,7 @@ function resolveClientId(cookieValue: string | undefined): string {
     return crypto.randomUUID();
 }
 
-async function resolveUserToken(cookieValue: string | undefined): Promise<Token> {
+async function resolveUserToken(event: H3Event, cookieValue: string | undefined): Promise<Token> {
     const {appId} = useRuntimeConfig().public.croct;
     let token: Token | null = null;
 
@@ -110,18 +110,21 @@ async function resolveUserToken(cookieValue: string | undefined): Promise<Token>
         }
     }
 
+    const userId = userIdResolver !== undefined ? await userIdResolver(event) : undefined;
+
     if (
         token === null
         || (isUserTokenAuthenticationEnabled() && !token.isSigned())
         || !token.isValidNow()
+        || (userId !== undefined && (userId === null ? !token.isAnonymous() : !token.isSubject(userId)))
     ) {
-        return issueToken();
+        return issueToken(userId ?? null);
     }
 
     const tokenAppId = token.getApplicationId();
 
     if (tokenAppId !== null && tokenAppId !== appId) {
-        return issueToken();
+        return issueToken(userId ?? null);
     }
 
     if (token.isSigned() && !await token.matchesKeyId(getAuthenticationKey())) {
@@ -129,6 +132,22 @@ async function resolveUserToken(cookieValue: string | undefined): Promise<Token>
     }
 
     return token;
+}
+
+async function resolvePreferredLocale(event: H3Event, defaultLocale: string): Promise<string | undefined> {
+    if (localeResolver !== undefined) {
+        const locale = await localeResolver(event);
+
+        if (locale !== null && locale !== '') {
+            return locale;
+        }
+    }
+
+    if (defaultLocale !== '') {
+        return defaultLocale;
+    }
+
+    return undefined;
 }
 
 function resolvePreviewToken(

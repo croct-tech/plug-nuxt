@@ -1,7 +1,8 @@
 import {describe, it, expect, afterEach, vi} from 'vitest';
 import {useContent as useContentVue} from '@croct/plug-vue';
-import {useRuntimeConfig, useNuxtApp} from '#app';
 import {useContent} from '../../../src/runtime/csr/useContent';
+
+import {resolveLocale} from '../../../src/runtime/utils/locale';
 
 vi.mock(
     '@croct/plug-vue',
@@ -17,65 +18,42 @@ vi.mock(
     }),
 );
 
-describe('CSR useContent', () => {
-    const config = useRuntimeConfig();
-    const originalLocale = config.public.croct.defaultPreferredLocale;
+vi.mock(
+    '../../../src/runtime/utils/locale',
+    () => ({
+        resolveLocale: vi.fn(),
+    }),
+);
 
+describe('CSR useContent', () => {
     afterEach(() => {
         vi.resetAllMocks();
-        config.public.croct.defaultPreferredLocale = originalLocale;
     });
 
-    it('should delegate to the Vue SDK useContent', () => {
-        useContent('home-hero');
-
-        expect(useContentVue).toHaveBeenCalledWith('home-hero', {});
-    });
-
-    it('should use the explicit preferred locale', () => {
-        config.public.croct.defaultPreferredLocale = 'pt-BR';
-
-        useContent('home-hero', {preferredLocale: 'en'});
-
-        expect(useContentVue).toHaveBeenCalledWith(
-            'home-hero',
-            expect.objectContaining({preferredLocale: 'en'}),
-        );
-    });
-
-    it('should fall back to the default locale from config', () => {
-        config.public.croct.defaultPreferredLocale = 'fr';
-
-        useContent('home-hero');
-
-        expect(useContentVue).toHaveBeenCalledWith(
-            'home-hero',
-            expect.objectContaining({preferredLocale: 'fr'}),
-        );
-    });
-
-    it('should not set locale when neither explicit nor default is provided', () => {
-        config.public.croct.defaultPreferredLocale = '';
+    it('should delegate to the Vue SDK', () => {
+        vi.mocked(resolveLocale).mockReturnValue(undefined);
 
         useContent('home-hero');
 
         expect(useContentVue).toHaveBeenCalledWith('home-hero', {});
     });
 
-    it('should resolve locale from @nuxtjs/i18n when available', () => {
-        const nuxtApp = useNuxtApp();
-
-        (nuxtApp as Record<string, unknown>).$i18n = {locale: {value: 'de'}};
-
-        config.public.croct.defaultPreferredLocale = '';
+    it('should include the resolved locale in the request', () => {
+        vi.mocked(resolveLocale).mockReturnValue('pt-br');
 
         useContent('home-hero');
 
         expect(useContentVue).toHaveBeenCalledWith(
             'home-hero',
-            expect.objectContaining({preferredLocale: 'de'}),
+            expect.objectContaining({preferredLocale: 'pt-br'}),
         );
+    });
 
-        delete (nuxtApp as Record<string, unknown>).$i18n;
+    it('should not include a locale when none is resolved', () => {
+        vi.mocked(resolveLocale).mockReturnValue(undefined);
+
+        useContent('home-hero');
+
+        expect(useContentVue).toHaveBeenCalledWith('home-hero', {});
     });
 });

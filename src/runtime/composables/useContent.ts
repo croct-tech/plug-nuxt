@@ -3,8 +3,9 @@ import type {VersionedSlotId, VersionedSlotMap} from '@croct/plug/slot';
 import type {FetchResponseOptions} from '@croct/sdk/contentFetcher';
 import type {FetchResponse} from '@croct/plug/api';
 import type {AsyncData, NuxtError} from '#app';
-import {useAsyncData, useRuntimeConfig} from '#app';
+import {useAsyncData} from '#app';
 import type {DynamicContentOptions} from '../server/composables/fetchContent';
+import {resolveLocale} from '../utils/locale';
 
 export type UseContentOptions<T extends JsonObject = JsonObject> = DynamicContentOptions<T>;
 
@@ -30,22 +31,9 @@ type UseContentHook = {
     ): AsyncData<FetchResponse<S, JsonObject, F, O>, NuxtError | null>,
 };
 
-function resolveLocale(explicitLocale: string | undefined, defaultLocale: string): string | undefined {
-    if (explicitLocale !== undefined && explicitLocale !== '') {
-        return explicitLocale;
-    }
-
-    if (defaultLocale !== '') {
-        return defaultLocale;
-    }
-
-    return undefined;
-}
-
 function useContentNuxt(slotId: string, options: UseContentOptions = {}): any {
-    const config = useRuntimeConfig();
     const {preferredLocale, ...rest} = options;
-    const locale = resolveLocale(preferredLocale, config.public.croct.defaultPreferredLocale);
+    const locale = resolveLocale(preferredLocale);
 
     const resolvedOptions = {
         ...(locale !== undefined ? {preferredLocale: locale} : {}),

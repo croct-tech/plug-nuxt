@@ -1,5 +1,6 @@
 import {createCroct} from '@croct/plug-vue';
 import {defineNuxtPlugin, useRuntimeConfig} from '#app';
+import {urlSanitizer} from '#croct/client-options';
 
 export default defineNuxtPlugin(nuxtApp => {
     const config = useRuntimeConfig().public.croct;
@@ -9,6 +10,7 @@ export default defineNuxtPlugin(nuxtApp => {
         disableCidMirroring: true,
         ...(config.debug === true ? {debug: true} : {}),
         ...(config.test === true ? {test: true} : {}),
+        ...(urlSanitizer !== undefined ? {urlSanitizer: urlSanitizer} : {}),
         ...(typeof config.baseEndpointUrl === 'string' && config.baseEndpointUrl !== ''
             ? {baseEndpointUrl: config.baseEndpointUrl}
             : {}

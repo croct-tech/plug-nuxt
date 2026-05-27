@@ -12,4 +12,10 @@ test.describe('SSR useContent', () => {
 
         await expect(page.getByTestId('error')).toBeVisible();
     });
+
+    test('should fetch localized content with explicit locale', async ({page}) => {
+        await page.goto('/ssr/use-content/localized');
+
+        await expect(page.getByTestId('headline')).toHaveText('Título Simulado');
+    });
 });

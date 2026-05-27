@@ -18,4 +18,10 @@ test.describe('SSR Slot', () => {
 
         await expect(page.getByTestId('headline')).toHaveText('Fallback Headline');
     });
+
+    test('should fetch localized content with explicit locale', async ({page}) => {
+        await page.goto('/ssr/slot-content/localized');
+
+        await expect(page.getByTestId('headline')).toHaveText('Título Simulado');
+    });
 });

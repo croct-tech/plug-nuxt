@@ -63,6 +63,7 @@
     "@croct/eslint-plugin": "^0.9.2",
     "@nuxt/module-builder": "^0.8.4",
     "@nuxt/test-utils": "^3.18.0",
+    "@nuxtjs/i18n": "^10.4.0",
     "@playwright/test": "^1.60.0",
     "@types/node": "^25.9.1",
     "@vitest/coverage-v8": "^3.2.4",
