@@ -5,7 +5,7 @@
         <source media="(min-width: 769px) and (prefers-color-scheme: dark)" srcset="https://github.com/croct-tech/plug-js/blob/master/.github/assets/header-dark.svg">
         <source media="(max-width: 768px) and (prefers-color-scheme: dark)" srcset="https://github.com/croct-tech/plug-js/blob/master/.github/assets/header-dark-mobile.svg">
         <source media="(max-width: 768px) and (prefers-color-scheme: light)" srcset="https://github.com/croct-tech/plug-js/blob/master/.github/assets/header-light-mobile.svg">
-        <img src="https://raw.githubusercontent.com/croct-tech/plug-js/refs/heads/update-readme/.github/assets/header-light-mobile.svg" alt="Croct Nuxt SDK" title="Croct Nuxt SDK" width="100%">
+        <img src="https://github.com/croct-tech/plug-js/blob/master/.github/assets/header-light-mobile.svg" alt="Croct Nuxt SDK" title="Croct Nuxt SDK" width="100%">
     </picture>
   </a>
   <br/>
@@ -13,7 +13,7 @@
   Bring dynamic, personalized content natively into your Nuxt applications.
 </p>
 <div align="center">
-    <strong><a href="https://docs.croct.com/reference/sdk/nuxt/installation">Quick start &rarr;</a></strong>
+    <strong><a href="https://docs.croct.com/reference/sdk/nuxt/integration">Quick start &rarr;</a></strong>
 </div>
 <br/>
 <p align="center">
@@ -31,7 +31,7 @@ Run this command to install the SDK:
 ```sh
 npm install @croct/plug-nuxt
 ```
-See our [quick start guide](https://docs.croct.com/reference/sdk/nuxt/installation) for more details.
+See our [quick start guide](https://docs.croct.com/reference/sdk/nuxt/integration) for more details.
 
 ## Documentation
 
