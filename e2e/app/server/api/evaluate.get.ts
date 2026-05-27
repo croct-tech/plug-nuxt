@@ -1,9 +1,7 @@
-export default defineEventHandler(async () => {
-    try {
-        const result = await evaluate('now')
+export default defineEventHandler(async event => {
+    const {query = 'now'} = getQuery<{query?: string}>(event);
 
-        return {result: result}
-    } catch (error: any) {
-        return {error: error.message}
-    }
+    const result = await evaluate(query);
+
+    return {result: result};
 })

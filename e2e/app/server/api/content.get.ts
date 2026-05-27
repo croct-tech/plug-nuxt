@@ -1,9 +1,7 @@
-export default defineEventHandler(async () => {
-    try {
-        const result = await fetchContent('home-hero')
+export default defineEventHandler(async event => {
+    const {slotId = 'home-hero'} = getQuery<{slotId?: string}>(event);
 
-        return {content: result.content}
-    } catch (error: any) {
-        return {error: error.message}
-    }
+    const result = await fetchContent(slotId);
+
+    return {content: result.content};
 })

@@ -12,8 +12,8 @@ onMounted(() => {
     initialized.value = plug.initialized;
 });
 
-function handleTrack(): void {
-    plug.track('goalCompleted', {goalId: 'playground-test'});
+async function handleTrack(): Promise<void> {
+    await plug.track('goalCompleted', {goalId: 'playground-test'});
     tracked.value = true;
 }
 </script>
