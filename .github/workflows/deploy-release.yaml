@@ -1,0 +1,12 @@
+name: Deploy release
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  deploy:
+    uses: croct-tech/shared-public-configs/.github/workflows/publish-public-npm-package.yml@master
+    secrets: inherit
+    with:
+      prepare: npm run build

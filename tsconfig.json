@@ -1,28 +1,27 @@
 {
   "compilerOptions": {
-    "module": "CommonJS",
+    "module": "ESNext",
     "target": "ES2020",
+    "moduleResolution": "Bundler",
+    "strict": true,
     "esModuleInterop": true,
-    "moduleResolution": "Node",
-    "stripInternal": true,
-    "allowSyntheticDefaultImports": true,
-    "resolveJsonModule": true,
-    "noImplicitAny": true,
-    "noFallthroughCasesInSwitch": true,
-    "noImplicitReturns": true,
-    "noImplicitThis": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "strictNullChecks": true,
-    "removeComments": false,
+    "skipLibCheck": true,
     "noEmit": true,
-    "downlevelIteration": true,
-    "declaration": true,
-    "lib": ["es6"]
+    "types": ["node"],
+    "paths": {
+      "#app": ["./node_modules/nuxt/dist/app"],
+      "#imports": ["./e2e/app/.nuxt/types/nitro-imports"]
+    }
   },
   "include": [
     "src/**/*.ts",
-    "test/**/*.ts"
+    "test/**/*.ts",
+    "e2e/**/*.ts",
+    "*.config.ts"
   ],
-  "exclude": ["node_modules", "build"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "e2e/app"
+  ]
 }
