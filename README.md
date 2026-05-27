@@ -35,7 +35,7 @@ See our [quick start guide](https://docs.croct.com/reference/sdk/nuxt/installati
 
 ## Documentation
 
-Visit our [official documentation](https://docs.croct.com/reference/sdk/nuxt/installation).
+Visit our [official documentation](https://docs.croct.com/reference/sdk/nuxt/integration).
 
 ## Support
 
