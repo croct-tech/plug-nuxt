@@ -1,4 +1,4 @@
-import {readBody} from 'h3';
+import {defineEventHandler, readBody} from 'h3';
 import {evaluate} from '../../composables/evaluate';
 
 export default defineEventHandler(async event => {
