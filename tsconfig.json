@@ -22,8 +22,6 @@
   "exclude": [
     "node_modules",
     "dist",
-    "e2e/app",
-    "src/runtime/server",
-    "test/runtime/server"
+    "e2e/app"
   ]
 }
