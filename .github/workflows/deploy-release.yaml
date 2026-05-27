@@ -9,4 +9,6 @@ jobs:
     uses: croct-tech/shared-public-configs/.github/workflows/publish-public-npm-package.yml@master
     secrets: inherit
     with:
-      prepare: npm run build
+      build-dir: .
+      prepare-script: >-
+        sed -i -e "s~\"version\": \"0.0.0-dev\"~\"version\": \"${GITHUB_REF##*/}\"~" package.json
