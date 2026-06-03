@@ -52,4 +52,8 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: npx playwright install-deps chromium
 
-      - run: npx playwright test
+      - name: Run e2e tests
+        run: npx playwright test
+
+      - name: Run prerendering e2e tests
+        run: npx playwright test -c playwright.prerender.config.ts

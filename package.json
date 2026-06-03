@@ -48,6 +48,8 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest watch",
+    "test:e2e": "playwright test",
+    "test:e2e:prerender": "playwright test -c playwright.prerender.config.ts",
     "validate": "tsc --noEmit"
   },
   "peerDependencies": {
