@@ -2,6 +2,8 @@ import {defineConfig} from '@playwright/test';
 
 export default defineConfig({
     testDir: './e2e/specs',
+    // Prerender specs require a production build; they have their own config.
+    testIgnore: '**/prerender/**',
     timeout: 30000,
     use: {
         baseURL: 'http://localhost:3200',
