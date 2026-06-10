@@ -1,6 +1,7 @@
 import {createServer, type IncomingMessage, type ServerResponse} from 'http';
+import {MOCK_SERVER_PORT, TENANT_NAME, TENANT_CREDENTIALS} from './constants';
 
-const PORT = 3210;
+const PORT = MOCK_SERVER_PORT;
 
 const SLOT_CONTENT: Record<string, object> = {
     'home-hero': {
@@ -36,10 +37,26 @@ const EVALUATION_RESULTS: Record<string, unknown> = {
     now: '2026-01-01T00:00:00.000000',
 };
 
+// Credentials served as if they lived in an external secrets service, keyed by
+// tenant. Used by the credentials resolver in the playground app.
+const CREDENTIALS_BY_TENANT: Record<string, object> = {
+    [TENANT_NAME]: TENANT_CREDENTIALS,
+};
+
 type Route = (body: Record<string, unknown>, url: URL) => {status: number, data: unknown};
 
 const routes: Record<string, Route> = {
     track: () => ({status: 200, data: {}}),
+    credentials: (_, url) => {
+        const tenant = url.searchParams.get('tenant') ?? '';
+        const credentials = CREDENTIALS_BY_TENANT[tenant];
+
+        if (credentials !== undefined) {
+            return {status: 200, data: credentials};
+        }
+
+        return {status: 404, data: {error: `Unknown tenant "${tenant}".`}};
+    },
     evaluate: body => {
         const query = String(body.query ?? '');
         const result = EVALUATION_RESULTS[query];

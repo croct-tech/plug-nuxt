@@ -20,7 +20,13 @@ export type CroctModuleOptions = {
     tokenDuration?: number,
     localeResolver?: string,
     userIdResolver?: string,
+    credentialsResolver?: string,
     urlSanitizer?: string,
+};
+
+export type CroctCredentials = {
+    appId: string,
+    apiKey: string,
 };
 
 export type CroctPublicConfig = {
@@ -77,6 +83,7 @@ declare module 'nuxt/schema' {
 declare module 'h3' {
     interface H3EventContext {
         croct?: CroctRequestContext;
+        croctCredentials?: CroctCredentials;
     }
 }
 

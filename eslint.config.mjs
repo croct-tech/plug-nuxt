@@ -20,6 +20,7 @@ export default defineConfig(
         files: [
             'src/module.ts',
             'src/runtime/plugin.client.ts',
+            'src/runtime/plugin.server.ts',
             'src/runtime/server/middleware/**/*.ts',
             'src/runtime/server/api/**/*.ts',
             'src/runtime/components/**/*.ts',

@@ -12,6 +12,7 @@ const resolvers = vi.hoisted(
     () => ({
         localeResolver: undefined as ((event: any) => any) | undefined,
         userIdResolver: undefined as ((event: any) => any) | undefined,
+        credentialsResolver: undefined as ((event: any) => any) | undefined,
     }),
 );
 
@@ -35,6 +36,9 @@ describe('middleware', () => {
 
     const UUID_PATTERN = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
 
+    const tenantAppId = '22222222-2222-2222-2222-222222222222';
+    const tenantApiKey = `33333333-3333-3333-3333-333333333333:${privateKeyA}`;
+
     const originalLocale = config.public.croct.defaultPreferredLocale;
     const originalApiKey = config.croct.apiKey;
     const originalDisableAuth = config.croct.disableUserTokenAuthentication;
@@ -45,6 +49,7 @@ describe('middleware', () => {
         config.croct.disableUserTokenAuthentication = originalDisableAuth;
         resolvers.localeResolver = undefined;
         resolvers.userIdResolver = undefined;
+        resolvers.credentialsResolver = undefined;
     });
 
     function createMockEvent(
@@ -274,6 +279,18 @@ describe('middleware', () => {
 
             expect(contextToken.isSigned()).toBe(true);
             expect(contextToken.getSubject()).toBe(signedToken.getSubject());
+        });
+
+        it('should issue the token for the app ID from the credentials resolver', async () => {
+            resolvers.credentialsResolver = () => ({appId: tenantAppId, apiKey: tenantApiKey});
+
+            const event = createMockEvent();
+
+            await handleRequest(event);
+
+            const contextToken = Token.parse(event.context.croct!.userToken);
+
+            expect(contextToken.getApplicationId()).toBe(tenantAppId);
         });
     });
 
@@ -530,6 +547,50 @@ describe('middleware', () => {
             await handleRequest(event);
 
             expect(event.context.croct!.preferredLocale).toBeUndefined();
+        });
+
+        it('should store the credentials returned by the credentials resolver', async () => {
+            resolvers.credentialsResolver = () => ({appId: tenantAppId, apiKey: tenantApiKey});
+
+            const event = createMockEvent();
+
+            await handleRequest(event);
+
+            expect(event.context.croctCredentials!.appId).toBe(tenantAppId);
+            expect(event.context.croctCredentials!.apiKey).toBe(tenantApiKey);
+        });
+
+        it('should fall back to the configured credentials when the resolver returns null', async () => {
+            resolvers.credentialsResolver = () => null;
+
+            const event = createMockEvent();
+
+            await handleRequest(event);
+
+            expect(event.context.croctCredentials!.appId).toBe(appId);
+            expect(event.context.croctCredentials!.apiKey).toBe(config.croct.apiKey);
+        });
+
+        it('should fall back to the configured app ID when the resolver omits it', async () => {
+            resolvers.credentialsResolver = () => ({apiKey: tenantApiKey});
+
+            const event = createMockEvent();
+
+            await handleRequest(event);
+
+            expect(event.context.croctCredentials!.appId).toBe(appId);
+            expect(event.context.croctCredentials!.apiKey).toBe(tenantApiKey);
+        });
+
+        it('should fall back to the configured API key when the resolver omits it', async () => {
+            resolvers.credentialsResolver = () => ({appId: tenantAppId});
+
+            const event = createMockEvent();
+
+            await handleRequest(event);
+
+            expect(event.context.croctCredentials!.appId).toBe(tenantAppId);
+            expect(event.context.croctCredentials!.apiKey).toBe(config.croct.apiKey);
         });
     });
 

@@ -11,10 +11,10 @@ import type {H3Event} from 'h3';
 import {Token} from '@croct/sdk/token';
 import {base64UrlDecode} from '@croct/sdk/base64Url';
 import {useRuntimeConfig} from '#imports';
-import {localeResolver, userIdResolver} from '#croct/resolvers';
+import {credentialsResolver, localeResolver, userIdResolver} from '#croct/resolvers';
 import {setUserTokenCookie, getProductionDefaults} from '../utils/cookie';
 import {getAuthenticationKey, isUserTokenAuthenticationEnabled, issueToken} from '../utils/security';
-import type {CroctRequestContext} from '../../../types';
+import type {CroctCredentials, CroctRequestContext} from '../../../types';
 
 const CLIENT_ID_PATTERN = /^(?:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}|[a-f0-9]{32})$/;
 const PREVIEW_QUERY_PARAM = 'croct-preview';
@@ -39,6 +39,10 @@ export default defineEventHandler(async event => {
 
     const config = useRuntimeConfig();
     const {cookie} = config.public.croct;
+
+    // Resolve per-request credentials (e.g. per tenant) before issuing the user
+    // token, so the token helpers and downstream composables use the right app.
+    event.context.croctCredentials = await resolveCredentials(event);
 
     const clientId = resolveClientId(getCookie(event, cookie.clientId.name));
     const userToken = await resolveUserToken(event, getCookie(event, cookie.userToken.name));
@@ -98,8 +102,31 @@ function resolveClientId(cookieValue: string | undefined): string {
     return crypto.randomUUID();
 }
 
+async function resolveCredentials(event: H3Event): Promise<CroctCredentials> {
+    const config = useRuntimeConfig();
+    const fallback: CroctCredentials = {
+        appId: config.public.croct.appId,
+        apiKey: config.croct.apiKey,
+    };
+
+    if (credentialsResolver === undefined) {
+        return fallback;
+    }
+
+    const credentials = await credentialsResolver(event);
+
+    if (credentials === null || credentials === undefined) {
+        return fallback;
+    }
+
+    return {
+        appId: credentials.appId ?? fallback.appId,
+        apiKey: credentials.apiKey ?? fallback.apiKey,
+    };
+}
+
 async function resolveUserToken(event: H3Event, cookieValue: string | undefined): Promise<Token> {
-    const {appId} = useRuntimeConfig().public.croct;
+    const {appId} = event.context.croctCredentials!;
     let token: Token | null = null;
 
     if (cookieValue !== undefined) {
@@ -114,21 +141,21 @@ async function resolveUserToken(event: H3Event, cookieValue: string | undefined)
 
     if (
         token === null
-        || (isUserTokenAuthenticationEnabled() && !token.isSigned())
+        || (isUserTokenAuthenticationEnabled(event) && !token.isSigned())
         || !token.isValidNow()
         || (userId !== undefined && (userId === null ? !token.isAnonymous() : !token.isSubject(userId)))
     ) {
-        return issueToken(userId ?? null);
+        return issueToken(userId ?? null, undefined, event);
     }
 
     const tokenAppId = token.getApplicationId();
 
     if (tokenAppId !== null && tokenAppId !== appId) {
-        return issueToken(userId ?? null);
+        return issueToken(userId ?? null, undefined, event);
     }
 
-    if (token.isSigned() && !await token.matchesKeyId(getAuthenticationKey())) {
-        return issueToken(token.getSubject(), token.getTokenId() ?? undefined);
+    if (token.isSigned() && !await token.matchesKeyId(getAuthenticationKey(event))) {
+        return issueToken(token.getSubject(), token.getTokenId() ?? undefined, event);
     }
 
     return token;

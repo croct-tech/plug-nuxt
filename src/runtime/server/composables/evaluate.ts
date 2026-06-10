@@ -27,7 +27,7 @@ export async function evaluate<T extends JsonValue>(
     const timeout = config.public.croct.defaultFetchTimeout;
 
     return executeQuery<T>(query, {
-        apiKey: getApiKey(),
+        apiKey: getApiKey(event),
         clientIp: context.clientIp ?? '127.0.0.1',
         ...(context.previewToken !== undefined ? {previewToken: context.previewToken} : {}),
         ...(context.userToken !== undefined ? {userToken: context.userToken} : {}),

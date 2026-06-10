@@ -1,9 +1,10 @@
+import type {H3Event} from 'h3';
 import {ApiKey} from '@croct/sdk/apiKey';
 import {Token} from '@croct/sdk/token';
 import {useRuntimeConfig} from '#imports';
 
-export function getApiKey(): ApiKey {
-    const {apiKey} = useRuntimeConfig().croct;
+export function getApiKey(event?: H3Event): ApiKey {
+    const apiKey = resolveApiKey(event);
 
     if (apiKey === '') {
         throw new Error(
@@ -23,8 +24,8 @@ export function getApiKey(): ApiKey {
     }
 }
 
-export function getAuthenticationKey(): ApiKey {
-    const apiKey = getApiKey();
+export function getAuthenticationKey(event?: H3Event): ApiKey {
+    const apiKey = getApiKey(event);
 
     if (!apiKey.hasPrivateKey()) {
         throw new Error(
@@ -37,27 +38,31 @@ export function getAuthenticationKey(): ApiKey {
     return apiKey;
 }
 
-export function isUserTokenAuthenticationEnabled(): boolean {
-    const config = useRuntimeConfig().croct;
-
-    return config.apiKey !== ''
-        && config.disableUserTokenAuthentication !== true;
+export function isUserTokenAuthenticationEnabled(event?: H3Event): boolean {
+    return resolveApiKey(event) !== ''
+        && useRuntimeConfig().croct.disableUserTokenAuthentication !== true;
 }
 
 export function issueToken(
     userId: string | null = null,
     tokenId?: string,
+    event?: H3Event,
 ): Promise<Token> {
-    const config = useRuntimeConfig();
-    const {appId} = config.public.croct;
+    const token = Token.issue(resolveAppId(event), userId)
+        .withDuration(useRuntimeConfig().croct.tokenDuration);
 
-    const token = Token.issue(appId, userId)
-        .withDuration(config.croct.tokenDuration);
-
-    if (isUserTokenAuthenticationEnabled()) {
+    if (isUserTokenAuthenticationEnabled(event)) {
         return token.withTokenId(tokenId ?? crypto.randomUUID())
-            .signedWith(getAuthenticationKey());
+            .signedWith(getAuthenticationKey(event));
     }
 
     return Promise.resolve(token);
+}
+
+function resolveAppId(event?: H3Event): string {
+    return event?.context.croctCredentials?.appId ?? useRuntimeConfig().public.croct.appId;
+}
+
+function resolveApiKey(event?: H3Event): string {
+    return event?.context.croctCredentials?.apiKey ?? useRuntimeConfig().croct.apiKey;
 }
