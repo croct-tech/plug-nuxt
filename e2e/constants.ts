@@ -8,7 +8,7 @@ export const MOCK_SERVER_URL = `http://localhost:${MOCK_SERVER_PORT}`;
 
 // A throwaway ES256 private key, so the API keys carry real secret material and
 // the leak test proves none of it reaches the client. The API key identifiers
-// are deliberately different from the app IDs so the leak test can tell them
+// are deliberately different from the app IDs so the leak test can tell themI
 // apart (the app ID is public and does reach the browser).
 const PRIVATE_KEY = 'ES256;MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQge1bnNunjop'
     + '/VA7LxIk91sUQpnTb0wNOF/pOPQpPozXihRANCAARl+g1Uuu5PyWNwMnmAKQ/9tyDhvaY1l9ONgr'
