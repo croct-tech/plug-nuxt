@@ -35,7 +35,7 @@ export async function fetchContent<
         throw new Error(
             'Croct\'s request context is missing. '
             + 'Make sure the @croct/plug-nuxt module is installed in your nuxt.config.ts. '
-            + 'For help, see: https://croct.help/sdk/nuxt/missing-middleware',
+            + 'For help, see: https://croct.help/sdk/nuxt/missing-module',
         );
     }
 
