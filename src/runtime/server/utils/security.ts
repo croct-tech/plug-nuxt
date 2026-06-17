@@ -9,7 +9,7 @@ export function getApiKey(): ApiKey {
         throw new Error(
             'Croct\'s API key is missing. '
             + 'Did you forget to set the NUXT_CROCT_API_KEY environment variable? '
-            + 'For help, see: https://croct.help/sdk/nuxt/missing-environment-variable',
+            + 'For help, see: https://croct.help/sdk/nuxt/missing-api-key',
         );
     }
 
