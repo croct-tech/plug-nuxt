@@ -1,9 +1,12 @@
+import {DEFAULT_CREDENTIALS} from '../constants';
+
 export default defineNuxtConfig({
     modules: ['../../src/module', '@nuxtjs/i18n'],
     croct: {
-        appId: '00000000-0000-0000-0000-000000000000',
+        appId: DEFAULT_CREDENTIALS.appId,
         userIdResolver: './croct/resolveUserId',
         localeResolver: './croct/resolveLocale',
+        credentialsResolver: './croct/resolveCredentials',
         urlSanitizer: './croct/sanitizeUrl',
     },
     routeRules: {

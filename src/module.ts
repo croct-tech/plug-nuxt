@@ -89,6 +89,8 @@ export default defineNuxtModule<CroctModuleOptions>({
 
         nuxt.options.alias['#croct/client-options'] = join(nuxt.options.buildDir, 'croct/client-options');
 
+        addPlugin(resolver.resolve('./runtime/plugin.server'));
+
         addPlugin(resolver.resolve('./runtime/plugin.client'));
 
         addServerHandler({
@@ -156,6 +158,14 @@ function generateResolversModule(
         lines.push(`export { default as userIdResolver } from '${appResolver.resolve(options.userIdResolver)}';`);
     } else {
         lines.push('export const userIdResolver = undefined;');
+    }
+
+    if (options.credentialsResolver !== undefined) {
+        lines.push(
+            `export { default as credentialsResolver } from '${appResolver.resolve(options.credentialsResolver)}';`,
+        );
+    } else {
+        lines.push('export const credentialsResolver = undefined;');
     }
 
     return lines.join('\n');

@@ -1,6 +1,6 @@
 import type {JsonValue} from '@croct/plug/sdk/json';
 import type {AsyncData, NuxtError} from '#app';
-import {useAsyncData} from '#app';
+import {useAsyncData, useRequestFetch} from '#app';
 import type {EvaluationOptions as BaseEvaluationOptions} from '../server/composables/evaluate';
 
 export type EvaluationOptions<T extends JsonValue = JsonValue> = BaseEvaluationOptions<T>;
@@ -22,7 +22,7 @@ function useEvaluationNuxt<T extends JsonValue>(query: string, options: Evaluati
 
     return useAsyncData(
         cacheKey,
-        (): Promise<T> => $fetch('/api/_croct/evaluate', {
+        (): Promise<T> => useRequestFetch()('/api/_croct/evaluate', {
             method: 'POST',
             body: {query: query, ...options},
         }),

@@ -1,4 +1,8 @@
 import {describe, it, expect, beforeEach, afterEach} from 'vitest';
+import {createEvent} from 'h3';
+import type {H3Event} from 'h3';
+import {IncomingMessage, ServerResponse} from 'http';
+import {Socket} from 'net';
 import {useRuntimeConfig} from '#imports';
 import {
     getApiKey,
@@ -6,6 +10,7 @@ import {
     isUserTokenAuthenticationEnabled,
     issueToken,
 } from '../../../../src/runtime/server/utils/security';
+import type {CroctCredentials} from '../../../../src/types';
 
 describe('security', () => {
     const identifier = '00000000-0000-0000-0000-000000000000';
@@ -13,6 +18,9 @@ describe('security', () => {
     const privateKey = 'ES256;MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQge1bnNunjop'
         + '/VA7LxIk91sUQpnTb0wNOF/pOPQpPozXihRANCAARl+g1Uuu5PyWNwMnmAKQ/9tyDhvaY1l9ONgr'
         + '/rWQYMCHDTPqXbZQbPkWaPvmvlMyQdVK9olB8U70q9r02uHngq';
+
+    const tenantIdentifier = '11111111-1111-1111-1111-111111111111';
+    const tenantAppId = '22222222-2222-2222-2222-222222222222';
 
     const config = useRuntimeConfig();
     const originalApiKey = config.croct.apiKey;
@@ -42,6 +50,14 @@ describe('security', () => {
             config.croct.apiKey = 'invalid';
 
             expect(() => getApiKey()).toThrow('API key is invalid');
+        });
+
+        it('should read the API key from the request context', () => {
+            config.croct.apiKey = `${identifier}:${privateKey}`;
+
+            const event = createEventWithCredentials({apiKey: `${tenantIdentifier}:${privateKey}`});
+
+            expect(getApiKey(event).getIdentifier()).toBe(tenantIdentifier);
         });
     });
 
@@ -78,6 +94,15 @@ describe('security', () => {
             config.croct.disableUserTokenAuthentication = false;
 
             expect(isUserTokenAuthenticationEnabled()).toBe(true);
+        });
+
+        it('should use the API key from the request context', () => {
+            config.croct.apiKey = '';
+            config.croct.disableUserTokenAuthentication = false;
+
+            const event = createEventWithCredentials({apiKey: `${tenantIdentifier}:${privateKey}`});
+
+            expect(isUserTokenAuthenticationEnabled(event)).toBe(true);
         });
     });
 
@@ -125,5 +150,39 @@ describe('security', () => {
 
             expect(token.getTokenId()).toBe(tokenId);
         });
+
+        it('should issue a token for the app ID from the request context', async () => {
+            const event = createEventWithCredentials({appId: tenantAppId});
+
+            const token = await issueToken(null, undefined, event);
+
+            expect(token.getApplicationId()).toBe(tenantAppId);
+        });
+
+        it('should sign the token with the API key from the request context', async () => {
+            config.croct.disableUserTokenAuthentication = false;
+
+            const event = createEventWithCredentials({
+                appId: tenantAppId,
+                apiKey: `${tenantIdentifier}:${privateKey}`,
+            });
+
+            const token = await issueToken(null, undefined, event);
+
+            expect(token.isSigned()).toBe(true);
+        });
     });
+
+    function createEventWithCredentials(credentials: Partial<CroctCredentials>): H3Event {
+        const request = new IncomingMessage(new Socket());
+        const event = createEvent(request, new ServerResponse(request));
+
+        event.context.croctCredentials = {
+            appId: '',
+            apiKey: '',
+            ...credentials,
+        };
+
+        return event;
+    }
 });

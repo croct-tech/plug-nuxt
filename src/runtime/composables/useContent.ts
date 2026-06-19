@@ -3,7 +3,7 @@ import type {VersionedSlotId, VersionedSlotMap} from '@croct/plug/slot';
 import type {FetchResponseOptions} from '@croct/sdk/contentFetcher';
 import type {FetchResponse} from '@croct/plug/api';
 import type {AsyncData, NuxtError} from '#app';
-import {useAsyncData} from '#app';
+import {useAsyncData, useRequestFetch} from '#app';
 import type {DynamicContentOptions} from '../server/composables/fetchContent';
 import {resolveLocale} from '../utils/locale';
 
@@ -44,7 +44,7 @@ function useContentNuxt(slotId: string, options: UseContentOptions = {}): any {
 
     return useAsyncData(
         cacheKey,
-        () => $fetch('/api/_croct/content', {
+        () => useRequestFetch()('/api/_croct/content', {
             method: 'POST',
             body: {slotId: slotId, ...resolvedOptions},
         }),

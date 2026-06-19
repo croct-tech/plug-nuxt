@@ -44,7 +44,7 @@ export async function fetchContent<
     const {logger, ...rest} = options;
 
     const commonOptions = {
-        apiKey: getApiKey(),
+        apiKey: getApiKey(event),
         ...(typeof config.public.croct.baseEndpointUrl === 'string' && config.public.croct.baseEndpointUrl !== ''
             ? {baseEndpointUrl: config.public.croct.baseEndpointUrl}
             : {}

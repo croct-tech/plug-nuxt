@@ -3,5 +3,7 @@ import {issueToken} from '../utils/security';
 import {setUserTokenCookie} from '../utils/cookie';
 
 export async function anonymize(): Promise<void> {
-    setUserTokenCookie(useEvent(), await issueToken());
+    const event = useEvent();
+
+    setUserTokenCookie(event, await issueToken(null, undefined, event));
 }
