@@ -1,7 +1,7 @@
 import type {PropType} from 'vue';
 import {defineComponent} from 'vue';
 import type {JsonObject} from '@croct/plug/sdk/json';
-import {useAsyncData} from '#app';
+import {useAsyncData, useRequestFetch} from '#app';
 
 export default defineComponent({
     name: 'Personalization',
@@ -32,7 +32,7 @@ export default defineComponent({
 
         const {data, pending, error} = await useAsyncData(
             `croct:pers:${props.query}:${JSON.stringify(options)}`,
-            () => $fetch('/api/_croct/evaluate', {
+            () => useRequestFetch()('/api/_croct/evaluate', {
                 method: 'POST',
                 body: {query: props.query, ...options},
             }),

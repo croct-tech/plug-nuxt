@@ -2,7 +2,7 @@ import type {PropType} from 'vue';
 import {defineComponent} from 'vue';
 import type {VersionedSlotId} from '@croct/plug/slot';
 import type {JsonObject} from '@croct/plug/sdk/json';
-import {useAsyncData} from '#app';
+import {useAsyncData, useRequestFetch} from '#app';
 import {resolveLocale} from '../utils/locale';
 
 export default defineComponent({
@@ -36,7 +36,7 @@ export default defineComponent({
 
         const {data, error} = await useAsyncData(
             `croct:slot:${props.id}:${JSON.stringify(options)}`,
-            () => $fetch('/api/_croct/content', {
+            () => useRequestFetch()('/api/_croct/content', {
                 method: 'POST',
                 body: {slotId: props.id, ...options},
             }),
