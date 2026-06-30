@@ -1,19 +1,19 @@
 <script setup lang="ts">
 import {ref, onMounted} from 'vue';
-import type {Plug} from '@croct/plug';
+
+// Called at the top of setup, so it runs during SSR. With the universal plugin
+// this must not throw; the plug's methods stay client-only.
+const croct = useCroct();
 
 const initialized = ref(false);
 const tracked = ref(false);
 
-let plug: Plug;
-
 onMounted(() => {
-    plug = useCroct();
-    initialized.value = plug.initialized;
+    initialized.value = croct.initialized;
 });
 
 async function handleTrack(): Promise<void> {
-    await plug.track('goalCompleted', {goalId: 'playground-test'});
+    await croct.track('goalCompleted', {goalId: 'playground-test'});
     tracked.value = true;
 }
 </script>

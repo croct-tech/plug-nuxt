@@ -1,6 +1,13 @@
 import {test, expect} from '@playwright/test';
 
 test.describe('useCroct', () => {
+    test('should server-render without throwing when called in setup', async ({request}) => {
+        const response = await request.get('/use-croct');
+
+        expect(response.ok()).toBe(true);
+        expect(await response.text()).not.toContain('requires the Croct plugin');
+    });
+
     test('should provide access to the initialized Croct plug instance', async ({page}) => {
         await page.goto('/use-croct');
 
