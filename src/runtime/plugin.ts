@@ -1,15 +1,18 @@
 import {createCroct} from '@croct/plug-vue';
-import {defineNuxtPlugin, useRuntimeConfig, useState} from '#app';
+import {defineNuxtPlugin, useRuntimeConfig, useRequestEvent, useState} from '#app';
 import {urlSanitizer} from '#croct/client-options';
 
 export default defineNuxtPlugin(nuxtApp => {
     const config = useRuntimeConfig().public.croct;
 
-    const resolvedAppId = useState<string>('croct:app-id').value;
-    const appId = resolvedAppId !== undefined && resolvedAppId !== '' ? resolvedAppId : config.appId;
+    const appId = useState('croct:app-id', () => {
+        const event = useRequestEvent();
+
+        return event?.context.croctCredentials?.appId ?? config.appId;
+    });
 
     const plugin = createCroct({
-        appId: appId,
+        appId: appId.value !== undefined && appId.value !== '' ? appId.value : config.appId,
         disableCidMirroring: true,
         ...(config.debug === true ? {debug: true} : {}),
         ...(config.test === true ? {test: true} : {}),

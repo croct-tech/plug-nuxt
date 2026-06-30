@@ -89,9 +89,7 @@ export default defineNuxtModule<CroctModuleOptions>({
 
         nuxt.options.alias['#croct/client-options'] = join(nuxt.options.buildDir, 'croct/client-options');
 
-        addPlugin(resolver.resolve('./runtime/plugin.server'));
-
-        addPlugin(resolver.resolve('./runtime/plugin.client'));
+        addPlugin(resolver.resolve('./runtime/plugin'));
 
         addServerHandler({
             handler: resolver.resolve('./runtime/server/middleware/croct'),
