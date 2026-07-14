@@ -8,6 +8,7 @@ import {
     addTemplate,
     createResolver,
 } from '@nuxt/kit';
+import type {Nuxt} from 'nuxt/schema';
 import type {CroctModuleOptions} from './types';
 
 const DEFAULT_CLIENT_ID_COOKIE_DURATION = 365 * 24 * 60 * 60;
@@ -29,7 +30,7 @@ export default defineNuxtModule<CroctModuleOptions>({
         disableUserTokenAuthentication: false,
         tokenDuration: DEFAULT_TOKEN_DURATION,
     },
-    setup: function (options, nuxt) {
+    setup: function (options: CroctModuleOptions, nuxt: Nuxt) {
         const resolver = createResolver(import.meta.url);
 
         const cookieConfig = {
