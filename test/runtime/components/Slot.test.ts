@@ -2,6 +2,8 @@ import {describe, it, expect, afterEach, vi} from 'vitest';
 import {mountSuspended, registerEndpoint} from '@nuxt/test-utils/runtime';
 import {readBody} from 'h3';
 import type {H3Event} from 'h3';
+import type {EvaluationContext} from '@croct/sdk/evaluator';
+import {clearNuxtData} from '#app';
 import Slot from '../../../src/runtime/components/Slot';
 
 import {resolveLocale} from '../../../src/runtime/utils/locale';
@@ -24,7 +26,10 @@ describe('Slot', () => {
     };
 
     afterEach(() => {
+        clearNuxtData();
         vi.resetAllMocks();
+
+        window.history.replaceState({}, '', '/');
     });
 
     it('should render the content from the server', async () => {
@@ -107,6 +112,59 @@ describe('Slot', () => {
         });
 
         expect(component.text()).toContain('Loading content...');
+    });
+
+    it('should report the page that originated the request', async () => {
+        vi.mocked(resolveLocale).mockReturnValue(undefined);
+
+        window.history.replaceState({}, '', '/products/1?foo=bar');
+
+        let receivedContext: EvaluationContext | undefined;
+
+        registerEndpoint('/api/_croct/content', {
+            method: 'POST',
+            handler: async (event: H3Event): Promise<SlotResponse> => {
+                receivedContext = (await readBody(event)).context;
+
+                return {content: {headline: 'Page Content'}};
+            },
+        });
+
+        await mountSuspended(Slot, {
+            props: {id: 'page-hero'},
+            slots: {
+                default: (props: SlotResponse) => props.content.headline,
+            },
+        });
+
+        expect(receivedContext?.page?.url).toBe('http://localhost:3000/products/1?foo=bar');
+    });
+
+    it('should report the attributes as part of the context', async () => {
+        vi.mocked(resolveLocale).mockReturnValue(undefined);
+
+        let receivedContext: EvaluationContext | undefined;
+
+        registerEndpoint('/api/_croct/content', {
+            method: 'POST',
+            handler: async (event: H3Event): Promise<SlotResponse> => {
+                receivedContext = (await readBody(event)).context;
+
+                return {content: {headline: 'Attributed Content'}};
+            },
+        });
+
+        await mountSuspended(Slot, {
+            props: {
+                id: 'attributed-hero',
+                attributes: {plan: 'pro'},
+            },
+            slots: {
+                default: (props: SlotResponse) => props.content.headline,
+            },
+        });
+
+        expect(receivedContext?.attributes).toEqual({plan: 'pro'});
     });
 
     it('should include the resolved locale in the request', async () => {

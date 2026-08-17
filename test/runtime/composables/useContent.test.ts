@@ -2,6 +2,8 @@ import {describe, it, expect, afterEach, vi} from 'vitest';
 import {registerEndpoint} from '@nuxt/test-utils/runtime';
 import {readBody} from 'h3';
 import type {H3Event} from 'h3';
+import type {EvaluationContext} from '@croct/sdk/evaluator';
+import {clearNuxtData} from '#app';
 import {useContent} from '../../../src/runtime/composables/useContent';
 
 import {resolveLocale} from '../../../src/runtime/utils/locale';
@@ -15,7 +17,10 @@ vi.mock(
 
 describe('useContent', () => {
     afterEach(() => {
+        clearNuxtData();
         vi.resetAllMocks();
+
+        window.history.replaceState({}, '', '/');
     });
 
     type ContentResponse = {
@@ -66,6 +71,51 @@ describe('useContent', () => {
         await useContent('home-hero');
 
         expect(receivedLocale).toBe('pt-br');
+    });
+
+    it('should report the page that originated the request', async () => {
+        vi.mocked(resolveLocale).mockReturnValue(undefined);
+
+        window.history.replaceState({}, '', '/products/1?foo=bar');
+
+        let receivedContext: EvaluationContext | undefined;
+
+        registerEndpoint('/api/_croct/content', {
+            method: 'POST',
+            handler: async (event: H3Event): Promise<ContentResponse> => {
+                receivedContext = (await readBody(event)).context;
+
+                return {
+                    content: {headline: 'Page Content'},
+                };
+            },
+        });
+
+        await useContent('page-hero');
+
+        expect(receivedContext?.page?.url).toBe('http://localhost:3000/products/1?foo=bar');
+    });
+
+    it('should report the page along with the context from the caller', async () => {
+        vi.mocked(resolveLocale).mockReturnValue(undefined);
+
+        let receivedContext: EvaluationContext | undefined;
+
+        registerEndpoint('/api/_croct/content', {
+            method: 'POST',
+            handler: async (event: H3Event): Promise<ContentResponse> => {
+                receivedContext = (await readBody(event)).context;
+
+                return {
+                    content: {headline: 'Page Content'},
+                };
+            },
+        });
+
+        await useContent('attributed-hero', {context: {attributes: {plan: 'pro'}}});
+
+        expect(receivedContext?.page?.url).toBe('http://localhost:3000/');
+        expect(receivedContext?.attributes).toEqual({plan: 'pro'});
     });
 
     it('should not include a locale when none is resolved', async () => {

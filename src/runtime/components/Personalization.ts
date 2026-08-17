@@ -1,7 +1,7 @@
 import type {PropType} from 'vue';
 import {defineComponent} from 'vue';
 import type {JsonObject} from '@croct/plug/sdk/json';
-import {useAsyncData, useRequestFetch} from '#app';
+import {useEvaluation} from '../composables/useEvaluation';
 
 export default defineComponent({
     name: 'Personalization',
@@ -24,19 +24,11 @@ export default defineComponent({
         },
     },
     setup: async function (props, {slots}) {
-        const options = {
+        const {data, pending, error} = await useEvaluation(props.query, {
             ...(props.fallback !== undefined ? {fallback: props.fallback} : {}),
             ...(props.timeout !== undefined ? {timeout: props.timeout} : {}),
-            ...(props.attributes !== undefined ? {attributes: props.attributes} : {}),
-        };
-
-        const {data, pending, error} = await useAsyncData(
-            `croct:pers:${props.query}:${JSON.stringify(options)}`,
-            () => useRequestFetch()('/api/_croct/evaluate', {
-                method: 'POST',
-                body: {query: props.query, ...options},
-            }),
-        );
+            ...(props.attributes !== undefined ? {context: {attributes: props.attributes}} : {}),
+        });
 
         return () => {
             if (error.value !== null) {

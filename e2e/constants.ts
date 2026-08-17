@@ -28,3 +28,8 @@ export const TENANT_CREDENTIALS = {
     appId: '11111111-1111-1111-1111-111111111111',
     apiKey: `bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb:${PRIVATE_KEY}`,
 };
+
+// Query and slot the mock server answers with the context it received, so the
+// specs can assert which page an evaluation or fetch was based on.
+export const CONTEXT_ECHO_QUERY = 'context';
+export const CONTEXT_ECHO_SLOT = 'context-echo';

@@ -2,8 +2,7 @@ import type {PropType} from 'vue';
 import {defineComponent} from 'vue';
 import type {VersionedSlotId} from '@croct/plug/slot';
 import type {JsonObject} from '@croct/plug/sdk/json';
-import {useAsyncData, useRequestFetch} from '#app';
-import {resolveLocale} from '../utils/locale';
+import {useContent} from '../composables/useContent';
 
 export default defineComponent({
     name: 'Slot',
@@ -26,21 +25,11 @@ export default defineComponent({
         },
     },
     setup: async function (props, {slots}) {
-        const locale = resolveLocale(props.preferredLocale);
-
-        const options = {
+        const {data, error} = await useContent(props.id, {
             ...(props.fallback !== undefined ? {fallback: props.fallback} : {}),
-            ...(locale !== undefined ? {preferredLocale: locale} : {}),
-            ...(props.attributes !== undefined ? {attributes: props.attributes} : {}),
-        };
-
-        const {data, error} = await useAsyncData(
-            `croct:slot:${props.id}:${JSON.stringify(options)}`,
-            () => useRequestFetch()('/api/_croct/content', {
-                method: 'POST',
-                body: {slotId: props.id, ...options},
-            }),
-        );
+            ...(props.preferredLocale !== undefined ? {preferredLocale: props.preferredLocale} : {}),
+            ...(props.attributes !== undefined ? {context: {attributes: props.attributes}} : {}),
+        });
 
         return () => {
             const response = data.value as {content?: unknown, metadata?: unknown} | null;

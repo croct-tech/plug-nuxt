@@ -1,6 +1,7 @@
 import type {SlotContent, VersionedSlotId} from '@croct/plug/slot';
 import type {JsonObject} from '@croct/plug/sdk/json';
 import type {FetchResponseOptions} from '@croct/sdk/contentFetcher';
+import type {EvaluationContext} from '@croct/sdk/evaluator';
 import type {
     DynamicContentOptions as DynamicOptions,
     StaticContentOptions as StaticOptions,
@@ -11,6 +12,7 @@ import {FilteredLogger} from '@croct/sdk/logging/filteredLogger';
 import {ConsoleLogger} from '@croct/sdk/logging/consoleLogger';
 import {useEvent, useRuntimeConfig} from '#imports';
 import {getApiKey} from '../utils/security';
+import {resolveContext} from '../utils/context';
 
 export type DynamicContentOptions<T extends JsonObject = JsonObject> = Omit<DynamicOptions<T>, 'apiKey' | 'appId'>;
 
@@ -66,6 +68,8 @@ export async function fetchContent<
         });
     }
 
+    const {context: reportedContext} = rest as {context?: EvaluationContext};
+
     return loadContent<I, C, O>(slotId, {
         clientIp: context.clientIp,
         ...(context.previewToken !== undefined ? {previewToken: context.previewToken} : {}),
@@ -73,19 +77,9 @@ export async function fetchContent<
         ...(context.clientId !== undefined ? {clientId: context.clientId} : {}),
         ...(context.clientAgent !== undefined ? {clientAgent: context.clientAgent} : {}),
         ...(context.preferredLocale !== undefined ? {preferredLocale: context.preferredLocale} : {}),
-        ...(context.uri !== undefined
-            ? {
-                context: {
-                    page: {
-                        url: context.uri,
-                        ...(context.referrer !== undefined ? {referrer: context.referrer} : {}),
-                    },
-                },
-            }
-            : {}
-        ),
         extra: {cache: 'no-store'},
         ...commonOptions,
         ...rest,
+        context: resolveContext(context, reportedContext),
     });
 }
