@@ -2,7 +2,7 @@ import type {JsonValue} from '@croct/plug/sdk/json';
 import type {AsyncData, NuxtError} from '#app';
 import {useAsyncData, useRequestFetch} from '#app';
 import type {EvaluationOptions as BaseEvaluationOptions} from '../server/composables/evaluate';
-import {resolvePageContext} from '../utils/page';
+import {resolveContext} from '../utils/context';
 
 export type EvaluationOptions<T extends JsonValue = JsonValue> = BaseEvaluationOptions<T>;
 
@@ -28,7 +28,7 @@ function useEvaluationNuxt<T extends JsonValue>(query: string, options: Evaluati
             body: {
                 query: query,
                 ...options,
-                context: resolvePageContext(options.context),
+                context: resolveContext(options.context),
             },
         }),
     );

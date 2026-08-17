@@ -6,7 +6,7 @@ import type {AsyncData, NuxtError} from '#app';
 import {useAsyncData, useRequestFetch} from '#app';
 import type {DynamicContentOptions} from '../server/composables/fetchContent';
 import {resolveLocale} from '../utils/locale';
-import {resolvePageContext} from '../utils/page';
+import {resolveContext} from '../utils/context';
 
 export type UseContentOptions<T extends JsonObject = JsonObject> = DynamicContentOptions<T>;
 
@@ -50,7 +50,7 @@ function useContentNuxt(slotId: string, options: UseContentOptions = {}): any {
             body: {
                 slotId: slotId,
                 ...resolvedOptions,
-                context: resolvePageContext(resolvedOptions.context),
+                context: resolveContext(resolvedOptions.context),
             },
         }),
     );

@@ -5,7 +5,6 @@ import {FilteredLogger} from '@croct/sdk/logging/filteredLogger';
 import {ConsoleLogger} from '@croct/sdk/logging/consoleLogger';
 import {useEvent, useRuntimeConfig} from '#imports';
 import {getApiKey} from '../utils/security';
-import {resolveContext} from '../utils/context';
 
 export type EvaluationOptions<T extends JsonValue = JsonValue> = Omit<BaseEvaluationOptions<T>, 'apiKey' | 'appId'>;
 
@@ -42,6 +41,17 @@ export async function evaluate<T extends JsonValue>(
         extra: {cache: 'no-store'},
         logger: FilteredLogger.include(new ConsoleLogger(), ['warn', 'error']),
         ...options,
-        context: resolveContext(context, options.context),
+        context: {
+            ...(context.uri !== undefined
+                ? {
+                    page: {
+                        url: context.uri,
+                        ...(context.referrer !== undefined ? {referrer: context.referrer} : {}),
+                    },
+                }
+                : {}
+            ),
+            ...options.context,
+        },
     });
 }

@@ -12,7 +12,6 @@ import {FilteredLogger} from '@croct/sdk/logging/filteredLogger';
 import {ConsoleLogger} from '@croct/sdk/logging/consoleLogger';
 import {useEvent, useRuntimeConfig} from '#imports';
 import {getApiKey} from '../utils/security';
-import {resolveContext} from '../utils/context';
 
 export type DynamicContentOptions<T extends JsonObject = JsonObject> = Omit<DynamicOptions<T>, 'apiKey' | 'appId'>;
 
@@ -80,6 +79,17 @@ export async function fetchContent<
         extra: {cache: 'no-store'},
         ...commonOptions,
         ...rest,
-        context: resolveContext(context, reportedContext),
+        context: {
+            ...(context.uri !== undefined
+                ? {
+                    page: {
+                        url: context.uri,
+                        ...(context.referrer !== undefined ? {referrer: context.referrer} : {}),
+                    },
+                }
+                : {}
+            ),
+            ...reportedContext,
+        },
     });
 }
