@@ -12,7 +12,6 @@ import {Token} from '@croct/sdk/token';
 import {base64UrlDecode} from '@croct/sdk/base64Url';
 import {useRuntimeConfig} from '#imports';
 import {credentialsResolver, localeResolver, userIdResolver} from '#croct/resolvers';
-import {urlSanitizer} from '#croct/client-options';
 import {setUserTokenCookie, getProductionDefaults} from '../utils/cookie';
 import {getAuthenticationKey, isUserTokenAuthenticationEnabled, issueToken} from '../utils/security';
 import type {CroctCredentials, CroctRequestContext} from '../../../types';
@@ -63,12 +62,12 @@ export default defineEventHandler(async event => {
     const context: CroctRequestContext = {
         clientId: clientId,
         userToken: userToken.toString(),
-        uri: sanitizeUrl(stripPreviewParam(url)),
+        uri: stripPreviewParam(url),
         ...(clientIp !== undefined ? {clientIp: clientIp} : {}),
         ...(preferredLocale !== undefined ? {preferredLocale: preferredLocale} : {}),
         ...(previewToken !== null && previewToken !== 'exit' ? {previewToken: previewToken} : {}),
         clientAgent: getHeader(event, 'user-agent'),
-        ...(referrer !== undefined && referrer !== '' ? {referrer: sanitizeUrl(referrer)} : {}),
+        ...(referrer !== undefined && referrer !== '' ? {referrer: referrer} : {}),
     };
 
     event.context.croct = context;
@@ -211,10 +210,6 @@ function isPreviewTokenValid(token: unknown): token is string {
     } catch {
         return false;
     }
-}
-
-function sanitizeUrl(url: string): string {
-    return urlSanitizer !== undefined ? urlSanitizer(url).toString() : url;
 }
 
 function stripPreviewParam(url: URL): string {

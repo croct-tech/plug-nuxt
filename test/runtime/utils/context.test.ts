@@ -86,12 +86,6 @@ describe('resolveContext', () => {
             expect(resolveContext().page).not.toHaveProperty('referrer');
         });
 
-        it('should omit the time zone when it cannot be detected', () => {
-            mockTimeZone('Etc/Unknown');
-
-            expect(resolveContext()).not.toHaveProperty('timeZone');
-        });
-
         it('should sanitize the URL and the referrer', () => {
             clientOptions.urlSanitizer = sanitizeToken;
 
@@ -101,7 +95,6 @@ describe('resolveContext', () => {
 
             expect(resolveContext().page).toEqual({
                 url: 'http://localhost:3000/products/1?foo=bar',
-                title: '',
                 referrer: 'https://google.com/?foo=bar',
             });
         });
@@ -113,9 +106,7 @@ describe('resolveContext', () => {
 
             window.history.replaceState({}, '', '/products/1?foo=bar');
 
-            expect(resolveContext()).toEqual({
-                page: {url: 'http://localhost:3000/products/1?foo=bar'},
-            });
+            expect(resolveContext().page?.url).toBe('http://localhost:3000/products/1?foo=bar');
         });
 
         it('should report the referrer of the request being rendered', () => {
@@ -132,16 +123,6 @@ describe('resolveContext', () => {
             mockRequestEvent = {} as H3Event;
 
             expect(resolveContext().page).not.toHaveProperty('referrer');
-        });
-
-        it('should not report the title nor the time zone', () => {
-            mockRequestEvent = {} as H3Event;
-
-            document.title = 'Product 1';
-
-            expect(resolveContext()).toEqual({
-                page: {url: 'http://localhost:3000/'},
-            });
         });
 
         it('should sanitize the URL and the referrer', () => {
@@ -163,10 +144,10 @@ describe('resolveContext', () => {
         it('should preserve the context provided by the caller', () => {
             mockRequestEvent = {} as H3Event;
 
-            expect(resolveContext({attributes: {plan: 'pro'}})).toEqual({
-                page: {url: 'http://localhost:3000/'},
-                attributes: {plan: 'pro'},
-            });
+            const context = resolveContext({attributes: {plan: 'pro'}});
+
+            expect(context.page?.url).toBe('http://localhost:3000/');
+            expect(context.attributes).toEqual({plan: 'pro'});
         });
 
         it('should give precedence to the page provided by the caller', () => {

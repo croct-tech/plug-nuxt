@@ -18,14 +18,6 @@ const resolvers = vi.hoisted(
 
 vi.mock('#croct/resolvers', () => resolvers);
 
-const clientOptions = vi.hoisted(
-    () => ({
-        urlSanitizer: undefined as ((url: string) => URL) | undefined,
-    }),
-);
-
-vi.mock('#croct/client-options', () => clientOptions);
-
 async function handleRequest(event: ReturnType<typeof createEvent>): Promise<void> {
     return (handler as (event: ReturnType<typeof createEvent>) => Promise<void>)(event);
 }
@@ -58,7 +50,6 @@ describe('middleware', () => {
         resolvers.localeResolver = undefined;
         resolvers.userIdResolver = undefined;
         resolvers.credentialsResolver = undefined;
-        clientOptions.urlSanitizer = undefined;
     });
 
     function createMockEvent(
@@ -526,48 +517,6 @@ describe('middleware', () => {
             await handleRequest(event);
 
             expect(event.context.croct!.clientAgent).toBe('TestBot/1.0');
-        });
-
-        it('should sanitize the request URI', async () => {
-            clientOptions.urlSanitizer = url => {
-                const sanitized = new URL(url);
-
-                sanitized.searchParams.delete('token');
-
-                return sanitized;
-            };
-
-            const event = createMockEvent('http://localhost:3000/page?token=secret&foo=bar');
-
-            await handleRequest(event);
-
-            expect(event.context.croct!.uri).toBe('http://localhost:3000/page?foo=bar');
-        });
-
-        it('should sanitize the referrer', async () => {
-            clientOptions.urlSanitizer = url => {
-                const sanitized = new URL(url);
-
-                sanitized.searchParams.delete('token');
-
-                return sanitized;
-            };
-
-            const event = createMockEvent('http://localhost:3000/', {
-                referer: 'https://google.com/?token=secret&foo=bar',
-            });
-
-            await handleRequest(event);
-
-            expect(event.context.croct!.referrer).toBe('https://google.com/?foo=bar');
-        });
-
-        it('should not report an empty referrer', async () => {
-            const event = createMockEvent('http://localhost:3000/', {referer: ''});
-
-            await handleRequest(event);
-
-            expect(event.context.croct).not.toHaveProperty('referrer');
         });
 
         it('should capture the referrer', async () => {

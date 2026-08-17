@@ -1,7 +1,7 @@
 import type {SlotContent, VersionedSlotId} from '@croct/plug/slot';
 import type {JsonObject} from '@croct/plug/sdk/json';
 import type {FetchResponseOptions} from '@croct/sdk/contentFetcher';
-import type {EvaluationContext} from '@croct/sdk/evaluator';
+import {EvaluationContext} from '@croct/sdk/evaluator';
 import type {
     DynamicContentOptions as DynamicOptions,
     StaticContentOptions as StaticOptions,
@@ -11,6 +11,7 @@ import {fetchContent as loadContent} from '@croct/plug/api';
 import {FilteredLogger} from '@croct/sdk/logging/filteredLogger';
 import {ConsoleLogger} from '@croct/sdk/logging/consoleLogger';
 import {useEvent, useRuntimeConfig} from '#imports';
+import {urlSanitizer} from '#croct/client-options';
 import {getApiKey} from '../utils/security';
 
 export type DynamicContentOptions<T extends JsonObject = JsonObject> = Omit<DynamicOptions<T>, 'apiKey' | 'appId'>;
@@ -79,17 +80,20 @@ export async function fetchContent<
         extra: {cache: 'no-store'},
         ...commonOptions,
         ...rest,
-        context: {
-            ...(context.uri !== undefined
-                ? {
-                    page: {
-                        url: context.uri,
-                        ...(context.referrer !== undefined ? {referrer: context.referrer} : {}),
-                    },
-                }
-                : {}
-            ),
-            ...providedContext,
-        },
+        context: EvaluationContext.createPageContext(
+            {
+                ...(context.uri !== undefined
+                    ? {
+                        page: {
+                            url: context.uri,
+                            ...(context.referrer !== undefined ? {referrer: context.referrer} : {}),
+                        },
+                    }
+                    : {}
+                ),
+                ...providedContext,
+            },
+            {urlSanitizer: urlSanitizer},
+        ),
     });
 }
