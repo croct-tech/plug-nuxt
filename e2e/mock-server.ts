@@ -1,5 +1,5 @@
 import {createServer, type IncomingMessage, type ServerResponse} from 'http';
-import {MOCK_SERVER_PORT, TENANT_NAME, TENANT_CREDENTIALS} from './constants';
+import {MOCK_SERVER_PORT, TENANT_NAME, TENANT_CREDENTIALS, CONTEXT_ECHO_QUERY, CONTEXT_ECHO_SLOT} from './constants';
 
 const PORT = MOCK_SERVER_PORT;
 
@@ -59,6 +59,13 @@ const routes: Record<string, Route> = {
     },
     evaluate: body => {
         const query = String(body.query ?? '');
+
+        // Echoes the received context so the specs can assert which page
+        // the evaluation was based on.
+        if (query === CONTEXT_ECHO_QUERY) {
+            return {status: 200, data: body.context ?? null};
+        }
+
         const result = EVALUATION_RESULTS[query];
 
         if (result !== undefined) {
@@ -78,6 +85,21 @@ const routes: Record<string, Route> = {
     content: (body, url) => {
         const slotId = String(body.slotId ?? url.searchParams.get('slotId') ?? '');
         const baseSlotId = slotId.split('@')[0];
+
+        // Echoes the received context so the specs can assert which page
+        // the fetch was based on.
+        if (baseSlotId === CONTEXT_ECHO_SLOT) {
+            return {
+                status: 200,
+                data: {
+                    content: {
+                        _component: null,
+                        ...(body.context as {page?: object} | undefined)?.page,
+                    },
+                },
+            };
+        }
+
         const locale = typeof body.preferredLocale === 'string' ? body.preferredLocale : undefined;
         const content = (locale !== undefined ? LOCALIZED_SLOT_CONTENT[baseSlotId]?.[locale] : undefined)
             ?? SLOT_CONTENT[baseSlotId];

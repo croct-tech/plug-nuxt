@@ -1,6 +1,7 @@
 import type {SlotContent, VersionedSlotId} from '@croct/plug/slot';
 import type {JsonObject} from '@croct/plug/sdk/json';
 import type {FetchResponseOptions} from '@croct/sdk/contentFetcher';
+import {EvaluationContext} from '@croct/sdk/evaluator';
 import type {
     DynamicContentOptions as DynamicOptions,
     StaticContentOptions as StaticOptions,
@@ -10,6 +11,7 @@ import {fetchContent as loadContent} from '@croct/plug/api';
 import {FilteredLogger} from '@croct/sdk/logging/filteredLogger';
 import {ConsoleLogger} from '@croct/sdk/logging/consoleLogger';
 import {useEvent, useRuntimeConfig} from '#imports';
+import {urlSanitizer} from '#croct/client-options';
 import {getApiKey} from '../utils/security';
 
 export type DynamicContentOptions<T extends JsonObject = JsonObject> = Omit<DynamicOptions<T>, 'apiKey' | 'appId'>;
@@ -66,6 +68,8 @@ export async function fetchContent<
         });
     }
 
+    const {context: providedContext} = rest as {context?: EvaluationContext};
+
     return loadContent<I, C, O>(slotId, {
         clientIp: context.clientIp,
         ...(context.previewToken !== undefined ? {previewToken: context.previewToken} : {}),
@@ -73,19 +77,23 @@ export async function fetchContent<
         ...(context.clientId !== undefined ? {clientId: context.clientId} : {}),
         ...(context.clientAgent !== undefined ? {clientAgent: context.clientAgent} : {}),
         ...(context.preferredLocale !== undefined ? {preferredLocale: context.preferredLocale} : {}),
-        ...(context.uri !== undefined
-            ? {
-                context: {
-                    page: {
-                        url: context.uri,
-                        ...(context.referrer !== undefined ? {referrer: context.referrer} : {}),
-                    },
-                },
-            }
-            : {}
-        ),
         extra: {cache: 'no-store'},
         ...commonOptions,
         ...rest,
+        context: EvaluationContext.createPageContext(
+            {
+                ...(context.uri !== undefined
+                    ? {
+                        page: {
+                            url: context.uri,
+                            ...(context.referrer !== undefined ? {referrer: context.referrer} : {}),
+                        },
+                    }
+                    : {}
+                ),
+                ...providedContext,
+            },
+            {urlSanitizer: urlSanitizer},
+        ),
     });
 }

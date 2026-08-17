@@ -57,6 +57,8 @@ export default defineEventHandler(async event => {
         ?? getHeader(event, 'x-real-ip')
         ?? undefined;
 
+    const referrer = getHeader(event, 'referer');
+
     const context: CroctRequestContext = {
         clientId: clientId,
         userToken: userToken.toString(),
@@ -65,7 +67,7 @@ export default defineEventHandler(async event => {
         ...(preferredLocale !== undefined ? {preferredLocale: preferredLocale} : {}),
         ...(previewToken !== null && previewToken !== 'exit' ? {previewToken: previewToken} : {}),
         clientAgent: getHeader(event, 'user-agent'),
-        referrer: getHeader(event, 'referer'),
+        ...(referrer !== undefined && referrer !== '' ? {referrer: referrer} : {}),
     };
 
     event.context.croct = context;

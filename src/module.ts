@@ -88,7 +88,10 @@ export default defineNuxtModule<CroctModuleOptions>({
             getContents: () => clientOptionsCode,
         });
 
-        nuxt.options.alias['#croct/client-options'] = join(nuxt.options.buildDir, 'croct/client-options');
+        const clientOptionsPath = join(nuxt.options.buildDir, 'croct/client-options');
+
+        nuxt.options.alias['#croct/client-options'] = clientOptionsPath;
+        nitroOptions.alias['#croct/client-options'] = clientOptionsPath;
 
         addPlugin(resolver.resolve('./runtime/plugin'));
 

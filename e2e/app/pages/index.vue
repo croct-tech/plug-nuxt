@@ -24,6 +24,9 @@
                 <NuxtLink to="/ssr/personalization/valid">valid</NuxtLink> |
                 <NuxtLink to="/ssr/personalization/invalid">invalid</NuxtLink>
             </li>
+            <li>
+                <NuxtLink to="/ssr/page-context?token=secret&foo=bar">page context</NuxtLink>
+            </li>
         </ul>
 
         <h2>CSR</h2>

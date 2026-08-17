@@ -3,7 +3,9 @@ import type {EvaluationOptions as BaseEvaluationOptions} from '@croct/plug/api';
 import {evaluate as executeQuery} from '@croct/plug/api';
 import {FilteredLogger} from '@croct/sdk/logging/filteredLogger';
 import {ConsoleLogger} from '@croct/sdk/logging/consoleLogger';
+import {EvaluationContext} from '@croct/sdk/evaluator';
 import {useEvent, useRuntimeConfig} from '#imports';
+import {urlSanitizer} from '#croct/client-options';
 import {getApiKey} from '../utils/security';
 
 export type EvaluationOptions<T extends JsonValue = JsonValue> = Omit<BaseEvaluationOptions<T>, 'apiKey' | 'appId'>;
@@ -41,16 +43,20 @@ export async function evaluate<T extends JsonValue>(
         extra: {cache: 'no-store'},
         logger: FilteredLogger.include(new ConsoleLogger(), ['warn', 'error']),
         ...options,
-        ...(context.uri !== undefined
-            ? {
-                context: {
-                    page: {
-                        url: context.uri,
-                        ...(context.referrer !== undefined ? {referrer: context.referrer} : {}),
-                    },
-                },
-            }
-            : {}
+        context: EvaluationContext.createPageContext(
+            {
+                ...(context.uri !== undefined
+                    ? {
+                        page: {
+                            url: context.uri,
+                            ...(context.referrer !== undefined ? {referrer: context.referrer} : {}),
+                        },
+                    }
+                    : {}
+                ),
+                ...options.context,
+            },
+            {urlSanitizer: urlSanitizer},
         ),
     });
 }

@@ -58,7 +58,7 @@
   "dependencies": {
     "@croct/plug": "^0.24.0",
     "@croct/plug-vue": "^0.2.0",
-    "@croct/sdk": "^0.22.0",
+    "@croct/sdk": "^0.22.3",
     "@nuxt/kit": "^3.17.5"
   },
   "devDependencies": {
