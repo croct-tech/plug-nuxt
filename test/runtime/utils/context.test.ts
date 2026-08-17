@@ -59,103 +59,97 @@ describe('resolveContext', () => {
         return sanitized;
     }
 
-    describe('in the browser', () => {
-        it('should report the URL, title and time zone of the current page', () => {
-            mockTimeZone('America/Sao_Paulo');
+    it('should report the URL, title and time zone of the page open in the browser', () => {
+        mockTimeZone('America/Sao_Paulo');
 
-            window.history.replaceState({}, '', '/products/1?foo=bar');
+        window.history.replaceState({}, '', '/products/1?foo=bar');
 
-            document.title = 'Product 1';
+        document.title = 'Product 1';
 
-            expect(resolveContext()).toEqual({
-                page: {
-                    url: 'http://localhost:3000/products/1?foo=bar',
-                    title: 'Product 1',
-                },
-                timeZone: 'America/Sao_Paulo',
-            });
-        });
-
-        it('should report the referrer of the document', () => {
-            setDocumentReferrer('https://google.com/');
-
-            expect(resolveContext().page?.referrer).toBe('https://google.com/');
-        });
-
-        it('should omit the referrer when the document has none', () => {
-            expect(resolveContext().page).not.toHaveProperty('referrer');
-        });
-
-        it('should sanitize the URL and the referrer', () => {
-            clientOptions.urlSanitizer = sanitizeToken;
-
-            window.history.replaceState({}, '', '/products/1?token=secret&foo=bar');
-
-            setDocumentReferrer('https://google.com/?token=secret&foo=bar');
-
-            expect(resolveContext().page).toEqual({
+        expect(resolveContext()).toEqual({
+            page: {
                 url: 'http://localhost:3000/products/1?foo=bar',
-                referrer: 'https://google.com/?foo=bar',
-            });
+                title: 'Product 1',
+            },
+            timeZone: 'America/Sao_Paulo',
         });
     });
 
-    describe('while rendering on the server', () => {
-        it('should report the URL of the page being rendered', () => {
-            mockRequestEvent = {} as H3Event;
+    it('should report the referrer of the document in the browser', () => {
+        setDocumentReferrer('https://google.com/');
 
-            window.history.replaceState({}, '', '/products/1?foo=bar');
+        expect(resolveContext().page?.referrer).toBe('https://google.com/');
+    });
 
-            expect(resolveContext().page?.url).toBe('http://localhost:3000/products/1?foo=bar');
-        });
+    it('should omit the referrer when the document has none', () => {
+        expect(resolveContext().page).not.toHaveProperty('referrer');
+    });
 
-        it('should report the referrer of the request being rendered', () => {
-            mockRequestEvent = {} as H3Event;
-            mockRequestHeaders = {referer: 'https://google.com/'};
+    it('should sanitize the URL and the referrer of the page open in the browser', () => {
+        clientOptions.urlSanitizer = sanitizeToken;
 
-            // The document referrer must not leak into the server-side context
-            setDocumentReferrer('https://example.com/');
+        window.history.replaceState({}, '', '/products/1?token=secret&foo=bar');
 
-            expect(resolveContext().page?.referrer).toBe('https://google.com/');
-        });
+        setDocumentReferrer('https://google.com/?token=secret&foo=bar');
 
-        it('should omit the referrer when the request has none', () => {
-            mockRequestEvent = {} as H3Event;
-
-            expect(resolveContext().page).not.toHaveProperty('referrer');
-        });
-
-        it('should sanitize the URL and the referrer', () => {
-            mockRequestEvent = {} as H3Event;
-            mockRequestHeaders = {referer: 'https://google.com/?token=secret&foo=bar'};
-
-            clientOptions.urlSanitizer = sanitizeToken;
-
-            window.history.replaceState({}, '', '/products/1?token=secret&foo=bar');
-
-            expect(resolveContext().page).toEqual({
-                url: 'http://localhost:3000/products/1?foo=bar',
-                referrer: 'https://google.com/?foo=bar',
-            });
+        expect(resolveContext().page).toEqual({
+            url: 'http://localhost:3000/products/1?foo=bar',
+            referrer: 'https://google.com/?foo=bar',
         });
     });
 
-    describe('with a context from the caller', () => {
-        it('should preserve the context provided by the caller', () => {
-            mockRequestEvent = {} as H3Event;
+    it('should report the URL of the page being rendered on the server', () => {
+        mockRequestEvent = {} as H3Event;
 
-            const context = resolveContext({attributes: {plan: 'pro'}});
+        window.history.replaceState({}, '', '/products/1?foo=bar');
 
-            expect(context.page?.url).toBe('http://localhost:3000/');
-            expect(context.attributes).toEqual({plan: 'pro'});
+        expect(resolveContext().page?.url).toBe('http://localhost:3000/products/1?foo=bar');
+    });
+
+    it('should report the referrer of the request being rendered on the server', () => {
+        mockRequestEvent = {} as H3Event;
+        mockRequestHeaders = {referer: 'https://google.com/'};
+
+        // The document referrer must not leak into the server-side context
+        setDocumentReferrer('https://example.com/');
+
+        expect(resolveContext().page?.referrer).toBe('https://google.com/');
+    });
+
+    it('should omit the referrer when the request being rendered has none', () => {
+        mockRequestEvent = {} as H3Event;
+
+        expect(resolveContext().page).not.toHaveProperty('referrer');
+    });
+
+    it('should sanitize the URL and the referrer of the page being rendered on the server', () => {
+        mockRequestEvent = {} as H3Event;
+        mockRequestHeaders = {referer: 'https://google.com/?token=secret&foo=bar'};
+
+        clientOptions.urlSanitizer = sanitizeToken;
+
+        window.history.replaceState({}, '', '/products/1?token=secret&foo=bar');
+
+        expect(resolveContext().page).toEqual({
+            url: 'http://localhost:3000/products/1?foo=bar',
+            referrer: 'https://google.com/?foo=bar',
         });
+    });
 
-        it('should give precedence to the page provided by the caller', () => {
-            mockRequestEvent = {} as H3Event;
+    it('should preserve the context provided by the caller', () => {
+        mockRequestEvent = {} as H3Event;
 
-            expect(resolveContext({page: {url: 'https://example.com/landing'}}).page).toEqual({
-                url: 'https://example.com/landing',
-            });
+        const context = resolveContext({attributes: {plan: 'pro'}});
+
+        expect(context.page?.url).toBe('http://localhost:3000/');
+        expect(context.attributes).toEqual({plan: 'pro'});
+    });
+
+    it('should give precedence to the page provided by the caller', () => {
+        mockRequestEvent = {} as H3Event;
+
+        expect(resolveContext({page: {url: 'https://example.com/landing'}}).page).toEqual({
+            url: 'https://example.com/landing',
         });
     });
 });
