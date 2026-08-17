@@ -9,7 +9,7 @@ const UNKNOWN_TIME_ZONE = 'Etc/Unknown';
  *
  * The evaluation must be based on the page that originated the request, but the
  * internal API routes handle requests whose URL is the route itself, so the page
- * is reported by the caller, which takes precedence over the captured one.
+ * is provided by the caller, which takes precedence over the captured one.
  */
 export function resolveContext(context: EvaluationContext = {}): EvaluationContext {
     return {

@@ -160,7 +160,7 @@ describe('resolveContext', () => {
     });
 
     describe('with a context from the caller', () => {
-        it('should preserve the context reported by the caller', () => {
+        it('should preserve the context provided by the caller', () => {
             mockRequestEvent = {} as H3Event;
 
             expect(resolveContext({attributes: {plan: 'pro'}})).toEqual({
@@ -169,7 +169,7 @@ describe('resolveContext', () => {
             });
         });
 
-        it('should give precedence to the page reported by the caller', () => {
+        it('should give precedence to the page provided by the caller', () => {
             mockRequestEvent = {} as H3Event;
 
             expect(resolveContext({page: {url: 'https://example.com/landing'}}).page).toEqual({

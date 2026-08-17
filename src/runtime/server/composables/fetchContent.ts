@@ -67,7 +67,7 @@ export async function fetchContent<
         });
     }
 
-    const {context: reportedContext} = rest as {context?: EvaluationContext};
+    const {context: providedContext} = rest as {context?: EvaluationContext};
 
     return loadContent<I, C, O>(slotId, {
         clientIp: context.clientIp,
@@ -89,7 +89,7 @@ export async function fetchContent<
                 }
                 : {}
             ),
-            ...reportedContext,
+            ...providedContext,
         },
     });
 }
