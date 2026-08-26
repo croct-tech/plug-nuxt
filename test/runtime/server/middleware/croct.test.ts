@@ -187,6 +187,16 @@ describe('middleware', () => {
                 .toContain(`ct.client_id=${event.context.croct!.clientId}`);
         });
 
+        it('should let the SDK read the client ID cookie', async () => {
+            const event = createMockEvent();
+
+            await handleRequest(event);
+
+            const cookie = getSetCookies(event).find(entry => entry.startsWith('ct.client_id='));
+
+            expect(cookie).not.toContain('HttpOnly');
+        });
+
         it('should set the client ID cookie in the response', async () => {
             const event = createMockEvent();
 

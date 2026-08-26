@@ -9,8 +9,8 @@ test.describe('identity', () => {
         const clientId = cookies.find(cookie => cookie.name === 'ct.client_id');
         const userToken = cookies.find(cookie => cookie.name === 'ct.user_token');
 
-        await expect(page.getByTestId('client-id')).toHaveText(clientId!.value);
-        await expect(page.getByTestId('token')).toHaveText(userToken!.value);
+        await expect(page.getByTestId('server-client-id')).toHaveText(clientId!.value);
+        await expect(page.getByTestId('server-token')).toHaveText(userToken!.value);
     });
 
     test('should evaluate as the visitor the cookies identify, on a later visit', async ({page}) => {
@@ -21,6 +21,23 @@ test.describe('identity', () => {
 
         await page.goto('/identity');
 
-        await expect(page.getByTestId('client-id')).toHaveText(clientId);
+        await expect(page.getByTestId('server-client-id')).toHaveText(clientId);
+    });
+
+    test('should evaluate as the same visitor in the browser', async ({page}) => {
+        await page.goto('/identity');
+
+        const serverToken = await page.getByTestId('server-token').textContent();
+
+        await expect(page.getByTestId('browser-token')).toHaveText(serverToken!, {timeout: 10000});
+    });
+
+    test('should expose the identity to the SDK', async ({page}) => {
+        await page.goto('/identity');
+
+        const cookies = await page.evaluate(() => document.cookie);
+
+        expect(cookies).toContain('ct.client_id=');
+        expect(cookies).toContain('ct.user_token=');
     });
 });

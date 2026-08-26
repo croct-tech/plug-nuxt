@@ -1,5 +1,6 @@
 import {test, expect} from '@playwright/test';
 import {Token} from '@croct/sdk/token';
+import {DEFAULT_CREDENTIALS} from '../constants';
 
 test.describe('server middleware', () => {
     test.describe('cookies', () => {
@@ -52,10 +53,10 @@ test.describe('server middleware', () => {
 
     test.describe('preview tokens', () => {
         function createValidPreviewToken(): string {
-            const header = Buffer.from('{"alg":"none"}').toString('base64url');
-            const payload = Buffer.from('{"exp":9999999999}').toString('base64url');
-
-            return `${header}.${payload}.`;
+            // A token the SDK also accepts, as it manages the cookie in the browser
+            return Token.issue(DEFAULT_CREDENTIALS.appId)
+                .withDuration(3600)
+                .toString();
         }
 
         test('should set preview cookie from a valid query parameter', async ({page}) => {

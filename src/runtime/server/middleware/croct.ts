@@ -84,7 +84,6 @@ export default defineEventHandler(async event => {
             path: '/',
             ...(cookie.previewToken.domain !== '' ? {domain: cookie.previewToken.domain} : {}),
             ...productionDefaults,
-            httpOnly: true,
         });
     }
 
@@ -95,7 +94,6 @@ export default defineEventHandler(async event => {
         path: '/',
         ...(cookie.clientId.domain !== '' ? {domain: cookie.clientId.domain} : {}),
         ...productionDefaults,
-        httpOnly: true,
     });
 
     // Requests issued while rendering forward the cookies of the request being
