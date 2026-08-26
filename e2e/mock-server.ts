@@ -57,10 +57,11 @@ type Headers = Record<string, string | string[] | undefined>;
 
 type Route = (body: Record<string, unknown>, url: URL, headers: Headers) => {status: number, data: unknown};
 
-function identityOf(headers: Headers): {token: string | null, clientId: string | null} {
+function identityOf(headers: Headers): {token: string | null, clientId: string | null, preview: boolean} {
     return {
         token: (headers['x-token'] as string | undefined) ?? null,
         clientId: (headers['x-client-id'] as string | undefined) ?? null,
+        preview: headers['x-preview-token'] !== undefined,
     };
 }
 
@@ -119,6 +120,7 @@ const routes: Record<string, Route> = {
                     content: {
                         _component: null,
                         ...identityOf(headers),
+                        preview: body.previewToken !== undefined,
                     },
                 },
             };

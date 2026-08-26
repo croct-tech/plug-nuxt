@@ -1,5 +1,7 @@
 import {test, expect} from '@playwright/test';
 import type {Page} from '@playwright/test';
+import {Token} from '@croct/sdk/token';
+import {DEFAULT_CREDENTIALS} from '../../constants';
 
 type Identity = {
     clientId: string,
@@ -14,6 +16,12 @@ test.describe('identity', () => {
             clientId: cookies.find(cookie => cookie.name === 'ct.client_id')!.value,
             userToken: cookies.find(cookie => cookie.name === 'ct.user_token')!.value,
         };
+    }
+
+    async function fetchIdentity(page: Page): Promise<{token: string, preview: boolean}> {
+        const {fetched} = await (await page.request.get('/api/identity')).json();
+
+        return fetched;
     }
 
     test('should expose the identity to the SDK', async ({page}) => {
@@ -84,6 +92,23 @@ test.describe('identity', () => {
 
         expect(evaluated.token).toBe(userToken);
         expect(fetched.token).toBe(userToken);
+    });
+
+    test('should stop previewing once the preview is exited', async ({page}) => {
+        const previewToken = Token.issue(DEFAULT_CREDENTIALS.appId)
+            .withDuration(3600)
+            .toString();
+
+        await page.goto(`/identity?croct-preview=${previewToken}`);
+
+        expect((await fetchIdentity(page)).preview).toBe(true);
+
+        await page.goto('/identity?croct-preview=exit');
+
+        // The SDK also manages the preview cookie, so exiting settles asynchronously
+        await expect
+            .poll(async () => (await fetchIdentity(page)).preview)
+            .toBe(false);
     });
 
     test('should keep the identity of an identified user', async ({page}) => {
