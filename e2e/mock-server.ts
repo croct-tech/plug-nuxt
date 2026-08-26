@@ -167,12 +167,19 @@ function handleRequest(request: IncomingMessage, response: ServerResponse): void
     request.on('data', (chunk: Buffer) => body.push(chunk));
 
     request.on('end', () => {
+        const {origin} = request.headers;
+
         response.setHeader('Content-Type', 'application/json');
-        // The SDK sends credentials, so the origin cannot be a wildcard
-        response.setHeader('Access-Control-Allow-Origin', request.headers.origin ?? '*');
-        response.setHeader('Access-Control-Allow-Credentials', 'true');
         response.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
         response.setHeader('Access-Control-Allow-Headers', request.headers['access-control-request-headers'] ?? '*');
+
+        if (origin === undefined) {
+            response.setHeader('Access-Control-Allow-Origin', '*');
+        } else {
+            // The SDK sends credentials, which forbids a wildcard origin
+            response.setHeader('Access-Control-Allow-Origin', origin);
+            response.setHeader('Access-Control-Allow-Credentials', 'true');
+        }
 
         if (request.method === 'OPTIONS') {
             response.writeHead(204);

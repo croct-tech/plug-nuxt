@@ -110,11 +110,12 @@ export default defineEventHandler(async event => {
 });
 
 function updateRequestCookies(event: H3Event, values: Record<string, string>): void {
+    const names = new Set(Object.keys(values));
     const header = event.node.req.headers.cookie ?? '';
 
     const cookies = header.split(';')
         .map(entry => entry.trim())
-        .filter(entry => entry !== '' && !(entry.split('=')[0] in values));
+        .filter(entry => entry !== '' && !names.has(entry.split('=')[0]));
 
     for (const [name, value] of Object.entries(values)) {
         cookies.push(`${name}=${value}`);

@@ -174,6 +174,17 @@ describe('middleware', () => {
                 .toContain(`ct.client_id=${event.context.croct!.clientId}`);
         });
 
+        it('should keep cookies named after object properties on the request', async () => {
+            const event = createMockEvent();
+
+            event.node.req.headers.cookie = 'toString=value; constructor=value';
+
+            await handleRequest(event);
+
+            expect(event.node.req.headers.cookie).toContain('toString=value');
+            expect(event.node.req.headers.cookie).toContain('constructor=value');
+        });
+
         it('should replace an invalid client ID on the request being handled', async () => {
             const event = createMockEvent();
 
