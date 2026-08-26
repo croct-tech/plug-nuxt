@@ -64,7 +64,7 @@ describe('cookie', () => {
             expect(cookies.some(cookie => cookie.startsWith(`ct.user_token=${token.toString()}`))).toBe(true);
         });
 
-        it('should set the HttpOnly flag', () => {
+        it('should let the SDK read the cookie', () => {
             const event = createMockEvent();
             const token = Token.issue(appId).withDuration(3600);
 
@@ -72,7 +72,7 @@ describe('cookie', () => {
 
             const cookies = getSetCookies(event);
 
-            expect(cookies.some(cookie => cookie.includes('HttpOnly'))).toBe(true);
+            expect(cookies.some(cookie => cookie.includes('HttpOnly'))).toBe(false);
         });
 
         it('should set the cookie max-age from config', () => {

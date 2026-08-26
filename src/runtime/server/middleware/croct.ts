@@ -9,7 +9,6 @@ import {
 } from 'h3';
 import type {H3Event} from 'h3';
 import {Token} from '@croct/sdk/token';
-import {base64UrlDecode} from '@croct/sdk/base64Url';
 import {useRuntimeConfig} from '#imports';
 import {credentialsResolver, localeResolver, userIdResolver} from '#croct/resolvers';
 import {setUserTokenCookie, getProductionDefaults} from '../utils/cookie';
@@ -31,6 +30,9 @@ function shouldSkip(pathname: string): boolean {
 }
 
 export default defineEventHandler(async event => {
+    // Requests issued while rendering a page share the context of the request
+    // being rendered, so the identity is resolved once and reused, rather than
+    // issuing a new client ID and user token for every internal request.
     const url = getRequestURL(event);
 
     if (shouldSkip(url.pathname)) {
@@ -81,7 +83,8 @@ export default defineEventHandler(async event => {
             path: '/',
             ...(cookie.previewToken.domain !== '' ? {domain: cookie.previewToken.domain} : {}),
             ...productionDefaults,
-            httpOnly: true,
+            // The SDK manages the preview mode in the browser
+            httpOnly: false,
         });
     }
 
@@ -92,9 +95,34 @@ export default defineEventHandler(async event => {
         path: '/',
         ...(cookie.clientId.domain !== '' ? {domain: cookie.clientId.domain} : {}),
         ...productionDefaults,
-        httpOnly: true,
+        // The SDK reads the client ID in the browser
+        httpOnly: false,
+    });
+
+    // Requests issued while rendering forward the cookies of the request being
+    // rendered, which still carry the previous identity, if any. Reflecting the
+    // issued cookies keeps the identity the same across all of them.
+    updateRequestCookies(event, {
+        [cookie.clientId.name]: clientId,
+        [cookie.userToken.name]: userToken.toString(),
+        ...(previewToken !== null && previewToken !== 'exit' ? {[cookie.previewToken.name]: previewToken} : {}),
     });
 });
+
+function updateRequestCookies(event: H3Event, values: Record<string, string>): void {
+    const names = new Set(Object.keys(values));
+    const header = event.node.req.headers.cookie ?? '';
+
+    const cookies = header.split(';')
+        .map(entry => entry.trim())
+        .filter(entry => entry !== '' && !names.has(entry.split('=')[0]));
+
+    for (const [name, value] of Object.entries(values)) {
+        cookies.push(`${name}=${value}`);
+    }
+
+    event.node.req.headers.cookie = cookies.join('; ');
+}
 
 function resolveClientId(cookieValue: string | undefined): string {
     if (cookieValue !== undefined && CLIENT_ID_PATTERN.test(cookieValue)) {
@@ -201,12 +229,10 @@ function isPreviewTokenValid(token: unknown): token is string {
         return false;
     }
 
-    const now = Math.floor(Date.now() / 1000);
-
+    // The SDK manages the token in the browser, so both sides must agree
+    // on what a valid token is.
     try {
-        const payload = JSON.parse(base64UrlDecode(token.split('.')[1]).toString());
-
-        return Number.isInteger(payload.exp) && payload.exp > now;
+        return Token.parse(token).isValidNow();
     } catch {
         return false;
     }

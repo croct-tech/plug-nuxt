@@ -85,10 +85,10 @@ describe('middleware', () => {
     }
 
     function createValidPreviewToken(): string {
-        const header = Buffer.from('{"alg":"none"}').toString('base64url');
-        const payload = Buffer.from('{"exp":9999999999}').toString('base64url');
-
-        return `${header}.${payload}.`;
+        // The SDK parses the token in the browser, so both sides must accept it
+        return Token.issue(appId)
+            .withDuration(3600)
+            .toString();
     }
 
     describe('route skipping', () => {
@@ -164,6 +164,50 @@ describe('middleware', () => {
             expect(event.context.croct!.clientId).not.toBe('not-a-uuid');
         });
 
+        it('should reflect the issued client ID on the request being handled', async () => {
+            const event = createMockEvent();
+
+            await handleRequest(event);
+
+            // Requests issued while rendering forward the cookies of this request
+            expect(event.node.req.headers.cookie)
+                .toContain(`ct.client_id=${event.context.croct!.clientId}`);
+        });
+
+        it('should keep cookies named after object properties on the request', async () => {
+            const event = createMockEvent();
+
+            event.node.req.headers.cookie = 'toString=value; constructor=value';
+
+            await handleRequest(event);
+
+            expect(event.node.req.headers.cookie).toContain('toString=value');
+            expect(event.node.req.headers.cookie).toContain('constructor=value');
+        });
+
+        it('should replace an invalid client ID on the request being handled', async () => {
+            const event = createMockEvent();
+
+            event.node.req.headers.cookie = 'ct.client_id=not-a-uuid; foo=bar';
+
+            await handleRequest(event);
+
+            expect(event.node.req.headers.cookie).not.toContain('not-a-uuid');
+            expect(event.node.req.headers.cookie).toContain('foo=bar');
+            expect(event.node.req.headers.cookie)
+                .toContain(`ct.client_id=${event.context.croct!.clientId}`);
+        });
+
+        it('should let the SDK read the client ID cookie', async () => {
+            const event = createMockEvent();
+
+            await handleRequest(event);
+
+            const cookie = getSetCookies(event).find(entry => entry.startsWith('ct.client_id='));
+
+            expect(cookie).not.toContain('HttpOnly');
+        });
+
         it('should set the client ID cookie in the response', async () => {
             const event = createMockEvent();
 
@@ -182,6 +226,15 @@ describe('middleware', () => {
             await handleRequest(event);
 
             expect(event.context.croct!.userToken).toBeTruthy();
+        });
+
+        it('should reflect the issued token on the request being handled', async () => {
+            const event = createMockEvent();
+
+            await handleRequest(event);
+
+            expect(event.node.req.headers.cookie)
+                .toContain(`ct.user_token=${event.context.croct!.userToken}`);
         });
 
         it('should issue a new token when cookie is invalid', async () => {
@@ -602,6 +655,18 @@ describe('middleware', () => {
             await handleRequest(event);
 
             expect(event.context.croct!.previewToken).toBe(previewToken);
+        });
+
+        it('should not set preview token for an expired token', async () => {
+            const expiredToken = Token.issue(appId)
+                .withDuration(-3600)
+                .toString();
+
+            const event = createMockEvent(`http://localhost:3000/?croct-preview=${expiredToken}`);
+
+            await handleRequest(event);
+
+            expect(event.context.croct!.previewToken).toBeUndefined();
         });
 
         it('should not set preview token for an invalid token', async () => {

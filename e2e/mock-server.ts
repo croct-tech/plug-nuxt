@@ -1,5 +1,13 @@
 import {createServer, type IncomingMessage, type ServerResponse} from 'http';
-import {MOCK_SERVER_PORT, TENANT_NAME, TENANT_CREDENTIALS, CONTEXT_ECHO_QUERY, CONTEXT_ECHO_SLOT} from './constants';
+import {
+    MOCK_SERVER_PORT,
+    TENANT_NAME,
+    TENANT_CREDENTIALS,
+    CONTEXT_ECHO_QUERY,
+    CONTEXT_ECHO_SLOT,
+    IDENTITY_ECHO_QUERY,
+    IDENTITY_ECHO_SLOT,
+} from './constants';
 
 const PORT = MOCK_SERVER_PORT;
 
@@ -33,6 +41,8 @@ const LOCALIZED_SLOT_CONTENT: Record<string, Record<string, object>> = {
     },
 };
 
+const MOCK_CLIENT_ID = '11111111111111111111111111111111';
+
 const EVALUATION_RESULTS: Record<string, unknown> = {
     now: '2026-01-01T00:00:00.000000',
 };
@@ -43,10 +53,21 @@ const CREDENTIALS_BY_TENANT: Record<string, object> = {
     [TENANT_NAME]: TENANT_CREDENTIALS,
 };
 
-type Route = (body: Record<string, unknown>, url: URL) => {status: number, data: unknown};
+type Headers = Record<string, string | string[] | undefined>;
+
+type Route = (body: Record<string, unknown>, url: URL, headers: Headers) => {status: number, data: unknown};
+
+function identityOf(headers: Headers): {token: string | null, clientId: string | null, preview: boolean} {
+    return {
+        token: (headers['x-token'] as string | undefined) ?? null,
+        clientId: (headers['x-client-id'] as string | undefined) ?? null,
+        preview: headers['x-preview-token'] !== undefined,
+    };
+}
 
 const routes: Record<string, Route> = {
     track: () => ({status: 200, data: {}}),
+    cid: () => ({status: 200, data: MOCK_CLIENT_ID}),
     credentials: (_, url) => {
         const tenant = url.searchParams.get('tenant') ?? '';
         const credentials = CREDENTIALS_BY_TENANT[tenant];
@@ -57,8 +78,13 @@ const routes: Record<string, Route> = {
 
         return {status: 404, data: {error: `Unknown tenant "${tenant}".`}};
     },
-    evaluate: body => {
+    evaluate: (body, _, headers) => {
         const query = String(body.query ?? '');
+
+        // Echoes the identity of the caller, to compare both sides of the SDK
+        if (query === IDENTITY_ECHO_QUERY) {
+            return {status: 200, data: identityOf(headers)};
+        }
 
         // Echoes the received context so the specs can assert which page
         // the evaluation was based on.
@@ -82,9 +108,23 @@ const routes: Record<string, Route> = {
             },
         };
     },
-    content: (body, url) => {
+    content: (body, url, headers) => {
         const slotId = String(body.slotId ?? url.searchParams.get('slotId') ?? '');
         const baseSlotId = slotId.split('@')[0];
+
+        // Echoes the identity of the caller, to compare both sides of the SDK
+        if (baseSlotId === IDENTITY_ECHO_SLOT) {
+            return {
+                status: 200,
+                data: {
+                    content: {
+                        _component: null,
+                        ...identityOf(headers),
+                        preview: body.previewToken !== undefined,
+                    },
+                },
+            };
+        }
 
         // Echoes the received context so the specs can assert which page
         // the fetch was based on.
@@ -127,10 +167,19 @@ function handleRequest(request: IncomingMessage, response: ServerResponse): void
     request.on('data', (chunk: Buffer) => body.push(chunk));
 
     request.on('end', () => {
+        const {origin} = request.headers;
+
         response.setHeader('Content-Type', 'application/json');
-        response.setHeader('Access-Control-Allow-Origin', '*');
         response.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-        response.setHeader('Access-Control-Allow-Headers', '*');
+        response.setHeader('Access-Control-Allow-Headers', request.headers['access-control-request-headers'] ?? '*');
+
+        if (origin === undefined) {
+            response.setHeader('Access-Control-Allow-Origin', '*');
+        } else {
+            // The SDK sends credentials, which forbids a wildcard origin
+            response.setHeader('Access-Control-Allow-Origin', origin);
+            response.setHeader('Access-Control-Allow-Credentials', 'true');
+        }
 
         if (request.method === 'OPTIONS') {
             response.writeHead(204);
@@ -151,7 +200,7 @@ function handleRequest(request: IncomingMessage, response: ServerResponse): void
             return;
         }
 
-        const {status, data} = route(requestBody, url);
+        const {status, data} = route(requestBody, url, request.headers);
 
         response.writeHead(status);
         response.end(JSON.stringify(data));

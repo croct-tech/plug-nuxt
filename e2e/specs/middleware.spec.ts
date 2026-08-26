@@ -1,5 +1,6 @@
 import {test, expect} from '@playwright/test';
 import {Token} from '@croct/sdk/token';
+import {DEFAULT_CREDENTIALS} from '../constants';
 
 test.describe('server middleware', () => {
     test.describe('cookies', () => {
@@ -52,10 +53,10 @@ test.describe('server middleware', () => {
 
     test.describe('preview tokens', () => {
         function createValidPreviewToken(): string {
-            const header = Buffer.from('{"alg":"none"}').toString('base64url');
-            const payload = Buffer.from('{"exp":9999999999}').toString('base64url');
-
-            return `${header}.${payload}.`;
+            // A token the SDK also accepts, as it manages the cookie in the browser
+            return Token.issue(DEFAULT_CREDENTIALS.appId)
+                .withDuration(3600)
+                .toString();
         }
 
         test('should set preview cookie from a valid query parameter', async ({page}) => {
@@ -68,6 +69,17 @@ test.describe('server middleware', () => {
 
             expect(previewCookie).toBeDefined();
             expect(previewCookie!.value).toBe(previewToken);
+        });
+
+        test('should expose the preview token to the SDK', async ({page}) => {
+            const previewToken = createValidPreviewToken();
+
+            await page.goto(`/?croct-preview=${previewToken}`);
+
+            // The SDK renders the preview widget and manages the token in the browser
+            const cookies = await page.evaluate(() => document.cookie);
+
+            expect(cookies).toContain(`ct.preview_token=${previewToken}`);
         });
 
         test('should persist preview cookie across navigations', async ({page}) => {
@@ -111,9 +123,13 @@ test.describe('server middleware', () => {
 
             await page.goto('/?croct-preview=exit');
 
-            const cookiesAfterExit = await page.context().cookies();
-
-            expect(cookiesAfterExit.find(cookie => cookie.name === 'ct.preview_token')).toBeUndefined();
+            // The SDK also manages the cookie, so the exit settles asynchronously
+            await expect
+                .poll(
+                    async () => (await page.context().cookies())
+                        .find(cookie => cookie.name === 'ct.preview_token'),
+                )
+                .toBeUndefined();
         });
     });
 
