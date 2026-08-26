@@ -8,27 +8,40 @@ type Identity = {
     clientId: string | null,
 };
 
-// Evaluated through the internal route, which the server resolves
-const {data: server} = await useEvaluation<Identity>('identity');
+// Evaluated and fetched through the internal routes, which the server resolves
+const {data: evaluated} = await useEvaluation<Identity>('identity');
+const {data: fetched} = await useContent<Identity>('identity-echo');
 
-// Evaluated by the SDK running in the browser
-const browser = ref<Identity | null>(null);
+// Evaluated and fetched by the SDK running in the browser
+const browserEvaluated = ref<Identity | null>(null);
+const browserFetched = ref<Identity | null>(null);
 
 onMounted(async () => {
-    browser.value = await useCroct().evaluate<Identity>('identity');
+    const croct = useCroct();
+
+    browserEvaluated.value = await croct.evaluate<Identity>('identity');
+    browserFetched.value = (await croct.fetch<Identity>('identity-echo')).content;
 });
 </script>
 
 <template>
     <h1>Identity</h1>
 
-    <section v-if="server">
-        <p data-testid="server-token">{{ server.token ?? 'none' }}</p>
-        <p data-testid="server-client-id">{{ server.clientId ?? 'none' }}</p>
+    <section v-if="evaluated">
+        <p data-testid="server-evaluation-token">{{ evaluated.token ?? 'none' }}</p>
+        <p data-testid="server-evaluation-client-id">{{ evaluated.clientId ?? 'none' }}</p>
     </section>
 
-    <section v-if="browser">
-        <p data-testid="browser-token">{{ browser.token ?? 'none' }}</p>
-        <p data-testid="browser-client-id">{{ browser.clientId ?? 'none' }}</p>
+    <section v-if="fetched">
+        <p data-testid="server-fetch-token">{{ fetched.content.token ?? 'none' }}</p>
+        <p data-testid="server-fetch-client-id">{{ fetched.content.clientId ?? 'none' }}</p>
+    </section>
+
+    <section v-if="browserEvaluated">
+        <p data-testid="browser-evaluation-token">{{ browserEvaluated.token ?? 'none' }}</p>
+    </section>
+
+    <section v-if="browserFetched">
+        <p data-testid="browser-fetch-token">{{ browserFetched.token ?? 'none' }}</p>
     </section>
 </template>

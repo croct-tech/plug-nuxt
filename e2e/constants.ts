@@ -33,3 +33,8 @@ export const TENANT_CREDENTIALS = {
 // specs can assert which page an evaluation or fetch was based on.
 export const CONTEXT_ECHO_QUERY = 'context';
 export const CONTEXT_ECHO_SLOT = 'context-echo';
+
+// Query and slot the mock server answers with the identity of the caller, so the
+// specs can assert that both sides of the SDK evaluate as the same visitor.
+export const IDENTITY_ECHO_QUERY = 'identity';
+export const IDENTITY_ECHO_SLOT = 'identity-echo';

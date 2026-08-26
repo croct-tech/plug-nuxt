@@ -123,9 +123,13 @@ test.describe('server middleware', () => {
 
             await page.goto('/?croct-preview=exit');
 
-            const cookiesAfterExit = await page.context().cookies();
-
-            expect(cookiesAfterExit.find(cookie => cookie.name === 'ct.preview_token')).toBeUndefined();
+            // The SDK also manages the cookie, so the exit settles asynchronously
+            await expect
+                .poll(
+                    async () => (await page.context().cookies())
+                        .find(cookie => cookie.name === 'ct.preview_token'),
+                )
+                .toBeUndefined();
         });
     });
 

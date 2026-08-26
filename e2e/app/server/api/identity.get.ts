@@ -1,6 +1,12 @@
 export default defineEventHandler(async () => {
-    // Evaluated through the server composable, outside a page render
-    const result = await evaluate('identity');
+    // Evaluated and fetched through the server composables, outside a page render
+    const [evaluated, fetched] = await Promise.all([
+        evaluate('identity'),
+        fetchContent('identity-echo'),
+    ]);
 
-    return {result: result};
+    return {
+        evaluated: evaluated,
+        fetched: fetched.content,
+    };
 })

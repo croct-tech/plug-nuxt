@@ -25,47 +25,52 @@ test.describe('identity', () => {
         expect(cookies).toContain('ct.user_token=');
     });
 
-    test('should evaluate as the identified visitor while rendering a first visit', async ({page}) => {
+    test('should evaluate and fetch as the identified visitor while rendering a first visit', async ({page}) => {
         // No cookies yet, so the middleware issues the identity while rendering
         await page.goto('/identity');
 
         const {clientId, userToken} = await getIdentity(page);
 
-        await expect(page.getByTestId('server-client-id')).toHaveText(clientId);
-        await expect(page.getByTestId('server-token')).toHaveText(userToken);
+        await expect(page.getByTestId('server-evaluation-token')).toHaveText(userToken);
+        await expect(page.getByTestId('server-evaluation-client-id')).toHaveText(clientId);
+        await expect(page.getByTestId('server-fetch-token')).toHaveText(userToken);
+        await expect(page.getByTestId('server-fetch-client-id')).toHaveText(clientId);
     });
 
-    test('should evaluate as the identified visitor while rendering a later visit', async ({page}) => {
+    test('should evaluate and fetch as the identified visitor while rendering a later visit', async ({page}) => {
         await page.goto('/identity');
 
         const {clientId, userToken} = await getIdentity(page);
 
         await page.goto('/identity');
 
-        await expect(page.getByTestId('server-client-id')).toHaveText(clientId);
-        await expect(page.getByTestId('server-token')).toHaveText(userToken);
+        await expect(page.getByTestId('server-evaluation-token')).toHaveText(userToken);
+        await expect(page.getByTestId('server-evaluation-client-id')).toHaveText(clientId);
+        await expect(page.getByTestId('server-fetch-token')).toHaveText(userToken);
     });
 
-    test('should evaluate as the identified visitor when navigating on the client', async ({page}) => {
+    test('should evaluate and fetch as the identified visitor when navigating on the client', async ({page}) => {
         await page.goto('/');
 
         const {clientId, userToken} = await getIdentity(page);
 
         await page.getByRole('link', {name: 'identity'}).click();
 
-        await expect(page.getByTestId('server-client-id')).toHaveText(clientId);
-        await expect(page.getByTestId('server-token')).toHaveText(userToken);
+        await expect(page.getByTestId('server-evaluation-token')).toHaveText(userToken);
+        await expect(page.getByTestId('server-fetch-token')).toHaveText(userToken);
+        await expect(page.getByTestId('server-fetch-client-id')).toHaveText(clientId);
     });
 
-    test('should evaluate as the identified visitor in the browser', async ({page}) => {
+    test('should evaluate and fetch as the identified visitor in the browser', async ({page}) => {
         await page.goto('/identity');
 
         const {userToken} = await getIdentity(page);
 
-        await expect(page.getByTestId('browser-token')).toHaveText(userToken, {timeout: 10000});
+        await expect(page.getByTestId('browser-evaluation-token')).toHaveText(userToken, {timeout: 10000});
+        await expect(page.getByTestId('browser-fetch-token')).toHaveText(userToken, {timeout: 10000});
     });
 
-    test('should evaluate as the identified visitor in an application route', async ({page}) => {
+    test('should evaluate and fetch as the identified visitor in an application route', async ({page}) => {
         await page.goto('/identity');
 
         const {userToken} = await getIdentity(page);
@@ -75,9 +80,10 @@ test.describe('identity', () => {
 
         expect(response.ok()).toBe(true);
 
-        const {result} = await response.json();
+        const {evaluated, fetched} = await response.json();
 
-        expect(result.token).toBe(userToken);
+        expect(evaluated.token).toBe(userToken);
+        expect(fetched.token).toBe(userToken);
     });
 
     test('should keep the identity of an identified user', async ({page}) => {
@@ -92,7 +98,9 @@ test.describe('identity', () => {
 
         const {userToken} = await getIdentity(page);
 
-        await expect(page.getByTestId('server-token')).toHaveText(userToken);
-        await expect(page.getByTestId('browser-token')).toHaveText(userToken, {timeout: 10000});
+        await expect(page.getByTestId('server-evaluation-token')).toHaveText(userToken);
+        await expect(page.getByTestId('server-fetch-token')).toHaveText(userToken);
+        await expect(page.getByTestId('browser-evaluation-token')).toHaveText(userToken, {timeout: 10000});
+        await expect(page.getByTestId('browser-fetch-token')).toHaveText(userToken, {timeout: 10000});
     });
 });

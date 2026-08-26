@@ -1,5 +1,13 @@
 import {createServer, type IncomingMessage, type ServerResponse} from 'http';
-import {MOCK_SERVER_PORT, TENANT_NAME, TENANT_CREDENTIALS, CONTEXT_ECHO_QUERY, CONTEXT_ECHO_SLOT} from './constants';
+import {
+    MOCK_SERVER_PORT,
+    TENANT_NAME,
+    TENANT_CREDENTIALS,
+    CONTEXT_ECHO_QUERY,
+    CONTEXT_ECHO_SLOT,
+    IDENTITY_ECHO_QUERY,
+    IDENTITY_ECHO_SLOT,
+} from './constants';
 
 const PORT = MOCK_SERVER_PORT;
 
@@ -49,15 +57,15 @@ type Headers = Record<string, string | string[] | undefined>;
 
 type Route = (body: Record<string, unknown>, url: URL, headers: Headers) => {status: number, data: unknown};
 
+function identityOf(headers: Headers): {token: string | null, clientId: string | null} {
+    return {
+        token: (headers['x-token'] as string | undefined) ?? null,
+        clientId: (headers['x-client-id'] as string | undefined) ?? null,
+    };
+}
+
 const routes: Record<string, Route> = {
-    track: (body, _, headers) => ({
-        status: 200,
-        // Echoes the identity of the caller, to compare it with the server's
-        data: {
-            token: headers['x-token'] ?? body.token ?? null,
-            clientId: headers['x-client-id'] ?? body.clientId ?? null,
-        },
-    }),
+    track: () => ({status: 200, data: {}}),
     cid: () => ({status: 200, data: MOCK_CLIENT_ID}),
     credentials: (_, url) => {
         const tenant = url.searchParams.get('tenant') ?? '';
@@ -73,14 +81,8 @@ const routes: Record<string, Route> = {
         const query = String(body.query ?? '');
 
         // Echoes the identity of the caller, to compare both sides of the SDK
-        if (query === 'identity') {
-            return {
-                status: 200,
-                data: {
-                    token: headers['x-token'] ?? null,
-                    clientId: headers['x-client-id'] ?? null,
-                },
-            };
+        if (query === IDENTITY_ECHO_QUERY) {
+            return {status: 200, data: identityOf(headers)};
         }
 
         // Echoes the received context so the specs can assert which page
@@ -105,9 +107,22 @@ const routes: Record<string, Route> = {
             },
         };
     },
-    content: (body, url) => {
+    content: (body, url, headers) => {
         const slotId = String(body.slotId ?? url.searchParams.get('slotId') ?? '');
         const baseSlotId = slotId.split('@')[0];
+
+        // Echoes the identity of the caller, to compare both sides of the SDK
+        if (baseSlotId === IDENTITY_ECHO_SLOT) {
+            return {
+                status: 200,
+                data: {
+                    content: {
+                        _component: null,
+                        ...identityOf(headers),
+                    },
+                },
+            };
+        }
 
         // Echoes the received context so the specs can assert which page
         // the fetch was based on.
