@@ -31,6 +31,9 @@ function shouldSkip(pathname: string): boolean {
 }
 
 export default defineEventHandler(async event => {
+    // Requests issued while rendering a page share the context of the request
+    // being rendered, so the identity is resolved once and reused, rather than
+    // issuing a new client ID and user token for every internal request.
     const url = getRequestURL(event);
 
     if (shouldSkip(url.pathname)) {
@@ -94,7 +97,30 @@ export default defineEventHandler(async event => {
         ...productionDefaults,
         httpOnly: true,
     });
+
+    // Requests issued while rendering forward the cookies of the request being
+    // rendered, which still carry the previous identity, if any. Reflecting the
+    // issued cookies keeps the identity the same across all of them.
+    updateRequestCookies(event, {
+        [cookie.clientId.name]: clientId,
+        [cookie.userToken.name]: userToken.toString(),
+        ...(previewToken !== null && previewToken !== 'exit' ? {[cookie.previewToken.name]: previewToken} : {}),
+    });
 });
+
+function updateRequestCookies(event: H3Event, values: Record<string, string>): void {
+    const header = event.node.req.headers.cookie ?? '';
+
+    const cookies = header.split(';')
+        .map(entry => entry.trim())
+        .filter(entry => entry !== '' && !(entry.split('=')[0] in values));
+
+    for (const [name, value] of Object.entries(values)) {
+        cookies.push(`${name}=${value}`);
+    }
+
+    event.node.req.headers.cookie = cookies.join('; ');
+}
 
 function resolveClientId(cookieValue: string | undefined): string {
     if (cookieValue !== undefined && CLIENT_ID_PATTERN.test(cookieValue)) {

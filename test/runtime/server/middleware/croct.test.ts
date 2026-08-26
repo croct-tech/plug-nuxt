@@ -164,6 +164,29 @@ describe('middleware', () => {
             expect(event.context.croct!.clientId).not.toBe('not-a-uuid');
         });
 
+        it('should reflect the issued client ID on the request being handled', async () => {
+            const event = createMockEvent();
+
+            await handleRequest(event);
+
+            // Requests issued while rendering forward the cookies of this request
+            expect(event.node.req.headers.cookie)
+                .toContain(`ct.client_id=${event.context.croct!.clientId}`);
+        });
+
+        it('should replace an invalid client ID on the request being handled', async () => {
+            const event = createMockEvent();
+
+            event.node.req.headers.cookie = 'ct.client_id=not-a-uuid; foo=bar';
+
+            await handleRequest(event);
+
+            expect(event.node.req.headers.cookie).not.toContain('not-a-uuid');
+            expect(event.node.req.headers.cookie).toContain('foo=bar');
+            expect(event.node.req.headers.cookie)
+                .toContain(`ct.client_id=${event.context.croct!.clientId}`);
+        });
+
         it('should set the client ID cookie in the response', async () => {
             const event = createMockEvent();
 
@@ -182,6 +205,15 @@ describe('middleware', () => {
             await handleRequest(event);
 
             expect(event.context.croct!.userToken).toBeTruthy();
+        });
+
+        it('should reflect the issued token on the request being handled', async () => {
+            const event = createMockEvent();
+
+            await handleRequest(event);
+
+            expect(event.node.req.headers.cookie)
+                .toContain(`ct.user_token=${event.context.croct!.userToken}`);
         });
 
         it('should issue a new token when cookie is invalid', async () => {
