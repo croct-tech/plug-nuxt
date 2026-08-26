@@ -8,8 +8,10 @@ type Identity = {
     clientId: string | null,
 };
 
+// Evaluated through the internal route, which the server resolves
 const {data: server} = await useEvaluation<Identity>('identity');
 
+// Evaluated by the SDK running in the browser
 const browser = ref<Identity | null>(null);
 
 onMounted(async () => {

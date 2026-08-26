@@ -1,36 +1,20 @@
 import {test, expect} from '@playwright/test';
+import type {Page} from '@playwright/test';
+
+type Identity = {
+    clientId: string,
+    userToken: string,
+};
 
 test.describe('identity', () => {
-    test('should evaluate as the visitor the response identifies, on a first visit', async ({page}) => {
-        // No cookies yet, so the middleware issues the identity while rendering
-        await page.goto('/identity');
-
+    async function getIdentity(page: Page): Promise<Identity> {
         const cookies = await page.context().cookies();
-        const clientId = cookies.find(cookie => cookie.name === 'ct.client_id');
-        const userToken = cookies.find(cookie => cookie.name === 'ct.user_token');
 
-        await expect(page.getByTestId('server-client-id')).toHaveText(clientId!.value);
-        await expect(page.getByTestId('server-token')).toHaveText(userToken!.value);
-    });
-
-    test('should evaluate as the visitor the cookies identify, on a later visit', async ({page}) => {
-        await page.goto('/identity');
-
-        const [{value: clientId}] = (await page.context().cookies())
-            .filter(cookie => cookie.name === 'ct.client_id');
-
-        await page.goto('/identity');
-
-        await expect(page.getByTestId('server-client-id')).toHaveText(clientId);
-    });
-
-    test('should evaluate as the same visitor in the browser', async ({page}) => {
-        await page.goto('/identity');
-
-        const serverToken = await page.getByTestId('server-token').textContent();
-
-        await expect(page.getByTestId('browser-token')).toHaveText(serverToken!, {timeout: 10000});
-    });
+        return {
+            clientId: cookies.find(cookie => cookie.name === 'ct.client_id')!.value,
+            userToken: cookies.find(cookie => cookie.name === 'ct.user_token')!.value,
+        };
+    }
 
     test('should expose the identity to the SDK', async ({page}) => {
         await page.goto('/identity');
@@ -39,5 +23,76 @@ test.describe('identity', () => {
 
         expect(cookies).toContain('ct.client_id=');
         expect(cookies).toContain('ct.user_token=');
+    });
+
+    test('should evaluate as the identified visitor while rendering a first visit', async ({page}) => {
+        // No cookies yet, so the middleware issues the identity while rendering
+        await page.goto('/identity');
+
+        const {clientId, userToken} = await getIdentity(page);
+
+        await expect(page.getByTestId('server-client-id')).toHaveText(clientId);
+        await expect(page.getByTestId('server-token')).toHaveText(userToken);
+    });
+
+    test('should evaluate as the identified visitor while rendering a later visit', async ({page}) => {
+        await page.goto('/identity');
+
+        const {clientId, userToken} = await getIdentity(page);
+
+        await page.goto('/identity');
+
+        await expect(page.getByTestId('server-client-id')).toHaveText(clientId);
+        await expect(page.getByTestId('server-token')).toHaveText(userToken);
+    });
+
+    test('should evaluate as the identified visitor when navigating on the client', async ({page}) => {
+        await page.goto('/');
+
+        const {clientId, userToken} = await getIdentity(page);
+
+        await page.getByRole('link', {name: 'identity'}).click();
+
+        await expect(page.getByTestId('server-client-id')).toHaveText(clientId);
+        await expect(page.getByTestId('server-token')).toHaveText(userToken);
+    });
+
+    test('should evaluate as the identified visitor in the browser', async ({page}) => {
+        await page.goto('/identity');
+
+        const {userToken} = await getIdentity(page);
+
+        await expect(page.getByTestId('browser-token')).toHaveText(userToken, {timeout: 10000});
+    });
+
+    test('should evaluate as the identified visitor in an application route', async ({page}) => {
+        await page.goto('/identity');
+
+        const {userToken} = await getIdentity(page);
+
+        // The request shares the cookies of the page
+        const response = await page.request.get('/api/identity');
+
+        expect(response.ok()).toBe(true);
+
+        const {result} = await response.json();
+
+        expect(result.token).toBe(userToken);
+    });
+
+    test('should keep the identity of an identified user', async ({page}) => {
+        // The application resolver identifies the user from a session cookie
+        await page.context().addCookies([{
+            name: 'app.session_user',
+            value: 'user-42',
+            url: 'http://localhost:3200',
+        }]);
+
+        await page.goto('/identity');
+
+        const {userToken} = await getIdentity(page);
+
+        await expect(page.getByTestId('server-token')).toHaveText(userToken);
+        await expect(page.getByTestId('browser-token')).toHaveText(userToken, {timeout: 10000});
     });
 });

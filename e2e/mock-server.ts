@@ -50,7 +50,14 @@ type Headers = Record<string, string | string[] | undefined>;
 type Route = (body: Record<string, unknown>, url: URL, headers: Headers) => {status: number, data: unknown};
 
 const routes: Record<string, Route> = {
-    track: () => ({status: 200, data: {}}),
+    track: (body, _, headers) => ({
+        status: 200,
+        // Echoes the identity of the caller, to compare it with the server's
+        data: {
+            token: headers['x-token'] ?? body.token ?? null,
+            clientId: headers['x-client-id'] ?? body.clientId ?? null,
+        },
+    }),
     cid: () => ({status: 200, data: MOCK_CLIENT_ID}),
     credentials: (_, url) => {
         const tenant = url.searchParams.get('tenant') ?? '';

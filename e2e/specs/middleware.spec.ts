@@ -71,6 +71,17 @@ test.describe('server middleware', () => {
             expect(previewCookie!.value).toBe(previewToken);
         });
 
+        test('should expose the preview token to the SDK', async ({page}) => {
+            const previewToken = createValidPreviewToken();
+
+            await page.goto(`/?croct-preview=${previewToken}`);
+
+            // The SDK renders the preview widget and manages the token in the browser
+            const cookies = await page.evaluate(() => document.cookie);
+
+            expect(cookies).toContain(`ct.preview_token=${previewToken}`);
+        });
+
         test('should persist preview cookie across navigations', async ({page}) => {
             const previewToken = createValidPreviewToken();
 

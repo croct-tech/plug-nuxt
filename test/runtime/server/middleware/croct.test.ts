@@ -85,10 +85,10 @@ describe('middleware', () => {
     }
 
     function createValidPreviewToken(): string {
-        const header = Buffer.from('{"alg":"none"}').toString('base64url');
-        const payload = Buffer.from('{"exp":9999999999}').toString('base64url');
-
-        return `${header}.${payload}.`;
+        // The SDK parses the token in the browser, so both sides must accept it
+        return Token.issue(appId)
+            .withDuration(3600)
+            .toString();
     }
 
     describe('route skipping', () => {
@@ -644,6 +644,18 @@ describe('middleware', () => {
             await handleRequest(event);
 
             expect(event.context.croct!.previewToken).toBe(previewToken);
+        });
+
+        it('should not set preview token for an expired token', async () => {
+            const expiredToken = Token.issue(appId)
+                .withDuration(-3600)
+                .toString();
+
+            const event = createMockEvent(`http://localhost:3000/?croct-preview=${expiredToken}`);
+
+            await handleRequest(event);
+
+            expect(event.context.croct!.previewToken).toBeUndefined();
         });
 
         it('should not set preview token for an invalid token', async () => {

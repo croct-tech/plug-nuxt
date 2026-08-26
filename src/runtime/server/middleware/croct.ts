@@ -9,7 +9,6 @@ import {
 } from 'h3';
 import type {H3Event} from 'h3';
 import {Token} from '@croct/sdk/token';
-import {base64UrlDecode} from '@croct/sdk/base64Url';
 import {useRuntimeConfig} from '#imports';
 import {credentialsResolver, localeResolver, userIdResolver} from '#croct/resolvers';
 import {setUserTokenCookie, getProductionDefaults} from '../utils/cookie';
@@ -225,12 +224,10 @@ function isPreviewTokenValid(token: unknown): token is string {
         return false;
     }
 
-    const now = Math.floor(Date.now() / 1000);
-
+    // The SDK manages the token in the browser, so both sides must agree
+    // on what a valid token is.
     try {
-        const payload = JSON.parse(base64UrlDecode(token.split('.')[1]).toString());
-
-        return Number.isInteger(payload.exp) && payload.exp > now;
+        return Token.parse(token).isValidNow();
     } catch {
         return false;
     }

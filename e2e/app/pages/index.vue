@@ -27,6 +27,9 @@
             <li>
                 <NuxtLink to="/ssr/page-context?token=secret&foo=bar">page context</NuxtLink>
             </li>
+            <li>
+                <NuxtLink to="/identity">identity</NuxtLink>
+            </li>
         </ul>
 
         <h2>CSR</h2>
