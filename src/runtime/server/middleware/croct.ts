@@ -83,6 +83,8 @@ export default defineEventHandler(async event => {
             path: '/',
             ...(cookie.previewToken.domain !== '' ? {domain: cookie.previewToken.domain} : {}),
             ...productionDefaults,
+            // The SDK manages the preview mode in the browser
+            httpOnly: false,
         });
     }
 
@@ -93,6 +95,8 @@ export default defineEventHandler(async event => {
         path: '/',
         ...(cookie.clientId.domain !== '' ? {domain: cookie.clientId.domain} : {}),
         ...productionDefaults,
+        // The SDK reads the client ID in the browser
+        httpOnly: false,
     });
 
     // Requests issued while rendering forward the cookies of the request being

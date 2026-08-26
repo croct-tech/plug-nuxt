@@ -19,6 +19,8 @@ export function setUserTokenCookie(event: H3Event, token: Token): void {
         path: '/',
         ...(config.domain !== '' ? {domain: config.domain} : {}),
         ...getProductionDefaults(),
+        // The SDK reads the token in the browser
+        httpOnly: false,
     });
 }
 
