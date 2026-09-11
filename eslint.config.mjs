@@ -1,8 +1,21 @@
 import {defineConfig} from 'eslint/config';
 import {configs} from '@croct/eslint-plugin';
+import {createTypeScriptImportResolver} from 'eslint-import-resolver-typescript';
 
 export default defineConfig(
     configs.typescript,
+    {
+        settings: {
+            /*
+            Without an explicit resolver, import-x falls back to the legacy "node" one, which is
+            not installed. Resolution then silently yields nothing, and no-cycle walking into
+            node_modules loads whatever sits at <package>/node as the resolver, which crashes the
+            run on packages shipping native bindings there, such as lightningcss.
+            This resolver also understands the tsconfig paths for #app and #imports.
+            */
+            'import-x/resolver-next': [createTypeScriptImportResolver({project: './tsconfig.json'})],
+        },
+    },
     {
         rules: {
             'func-names': 'off',

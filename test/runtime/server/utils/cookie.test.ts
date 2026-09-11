@@ -1,4 +1,4 @@
-import {describe, it, expect, afterEach} from 'vitest';
+import {describe, it, expect, afterEach, beforeAll} from 'vitest';
 import {IncomingMessage, ServerResponse} from 'http';
 import {Socket} from 'net';
 import {createEvent} from 'h3';
@@ -7,8 +7,13 @@ import {useRuntimeConfig} from '#imports';
 import {setUserTokenCookie, getProductionDefaults} from '../../../../src/runtime/server/utils/cookie';
 
 describe('cookie', () => {
-    const config = useRuntimeConfig();
-    const {appId} = config.public.croct;
+    let config: ReturnType<typeof useRuntimeConfig>;
+    let appId: string;
+
+    beforeAll(() => {
+        config = useRuntimeConfig();
+        ({appId} = config.public.croct);
+    });
 
     function createMockEvent(): ReturnType<typeof createEvent> {
         const request = new IncomingMessage(new Socket());

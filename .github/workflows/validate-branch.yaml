@@ -19,8 +19,17 @@ jobs:
       use-private-registry: false
 
   e2e:
+    name: e2e (nuxt ${{ matrix.nuxt }})
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        # The module supports both majors, so the suite runs against both.
+        # The lockfile pins Nuxt 4; the Nuxt 3 leg downgrades on top of it.
+        nuxt:
+          - '3'
+          - '4'
     steps:
       - uses: actions/checkout@v4
 
@@ -30,6 +39,12 @@ jobs:
           cache: npm
 
       - run: npm ci
+
+      # @nuxt/kit is a direct dependency ranged across both majors, so it has
+      # to be pinned alongside nuxt; otherwise the module keeps loading the
+      # newest kit while the app runs the other major.
+      - name: Install Nuxt ${{ matrix.nuxt }}
+        run: npm install --no-save nuxt@^${{ matrix.nuxt }} @nuxt/kit@^${{ matrix.nuxt }}
 
       - run: npm run build
 

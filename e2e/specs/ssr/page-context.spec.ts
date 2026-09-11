@@ -1,5 +1,6 @@
 import {test, expect} from '@playwright/test';
 import {APP_PORT} from '../../constants';
+import {waitForHydration} from '../../utils';
 
 const APP_URL = `http://localhost:${APP_PORT}`;
 
@@ -24,6 +25,8 @@ test.describe('page context', () => {
 
     test('should report the page navigated to on the client', async ({page}) => {
         await page.goto('/');
+
+        await waitForHydration(page);
 
         await page.getByRole('link', {name: 'page context'}).click();
 

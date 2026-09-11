@@ -1,4 +1,4 @@
-import {describe, it, expect, afterEach, vi} from 'vitest';
+import {describe, it, expect, afterEach, beforeAll, vi} from 'vitest';
 import {createEvent} from 'h3';
 import {IncomingMessage, ServerResponse} from 'http';
 import {Socket} from 'net';
@@ -23,8 +23,8 @@ async function handleRequest(event: ReturnType<typeof createEvent>): Promise<voi
 }
 
 describe('middleware', () => {
-    const config = useRuntimeConfig();
-    const {appId} = config.public.croct;
+    let config: ReturnType<typeof useRuntimeConfig>;
+    let appId: string;
 
     const privateKeyA = 'ES256;MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQge1bnNunjop'
         + '/VA7LxIk91sUQpnTb0wNOF/pOPQpPozXihRANCAARl+g1Uuu5PyWNwMnmAKQ/9tyDhvaY1l9ONgr'
@@ -39,9 +39,17 @@ describe('middleware', () => {
     const tenantAppId = '22222222-2222-2222-2222-222222222222';
     const tenantApiKey = `33333333-3333-3333-3333-333333333333:${privateKeyA}`;
 
-    const originalLocale = config.public.croct.defaultPreferredLocale;
-    const originalApiKey = config.croct.apiKey;
-    const originalDisableAuth = config.croct.disableUserTokenAuthentication;
+    let originalLocale: string;
+    let originalApiKey: string;
+    let originalDisableAuth: boolean;
+
+    beforeAll(() => {
+        config = useRuntimeConfig();
+        ({appId} = config.public.croct);
+        originalLocale = config.public.croct.defaultPreferredLocale;
+        originalApiKey = config.croct.apiKey;
+        originalDisableAuth = config.croct.disableUserTokenAuthentication;
+    });
 
     afterEach(() => {
         config.public.croct.defaultPreferredLocale = originalLocale;

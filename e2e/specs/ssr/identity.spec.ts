@@ -2,6 +2,7 @@ import {test, expect} from '@playwright/test';
 import type {Page} from '@playwright/test';
 import {Token} from '@croct/sdk/token';
 import {DEFAULT_CREDENTIALS} from '../../constants';
+import {waitForHydration} from '../../utils';
 
 type Identity = {
     clientId: string,
@@ -61,6 +62,8 @@ test.describe('identity', () => {
         await page.goto('/');
 
         const {clientId, userToken} = await getIdentity(page);
+
+        await waitForHydration(page);
 
         await page.getByRole('link', {name: 'identity'}).click();
 
