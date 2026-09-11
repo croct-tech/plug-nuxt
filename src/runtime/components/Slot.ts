@@ -32,7 +32,7 @@ export default defineComponent({
         });
 
         return () => {
-            const response = data.value as {content?: unknown, metadata?: unknown} | null;
+            const response = data.value as {content?: unknown, metadata?: unknown} | null | undefined;
 
             if (response !== null && typeof response === 'object' && 'content' in response) {
                 return slots.default?.({
@@ -41,7 +41,7 @@ export default defineComponent({
                 });
             }
 
-            if (error.value !== null) {
+            if (error.value !== null && error.value !== undefined) {
                 return slots.error?.({error: error.value});
             }
 

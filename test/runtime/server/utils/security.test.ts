@@ -1,4 +1,4 @@
-import {describe, it, expect, beforeEach, afterEach} from 'vitest';
+import {describe, it, expect, beforeEach, beforeAll, afterEach} from 'vitest';
 import {createEvent} from 'h3';
 import type {H3Event} from 'h3';
 import {IncomingMessage, ServerResponse} from 'http';
@@ -22,10 +22,17 @@ describe('security', () => {
     const tenantIdentifier = '11111111-1111-1111-1111-111111111111';
     const tenantAppId = '22222222-2222-2222-2222-222222222222';
 
-    const config = useRuntimeConfig();
-    const originalApiKey = config.croct.apiKey;
-    const originalDisable = config.croct.disableUserTokenAuthentication;
-    const originalDuration = config.croct.tokenDuration;
+    let config: ReturnType<typeof useRuntimeConfig>;
+    let originalApiKey: string;
+    let originalDisable: boolean;
+    let originalDuration: number;
+
+    beforeAll(() => {
+        config = useRuntimeConfig();
+        originalApiKey = config.croct.apiKey;
+        originalDisable = config.croct.disableUserTokenAuthentication;
+        originalDuration = config.croct.tokenDuration;
+    });
 
     afterEach(() => {
         config.croct.apiKey = originalApiKey;

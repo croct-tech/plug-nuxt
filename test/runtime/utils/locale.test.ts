@@ -1,4 +1,4 @@
-import {describe, it, expect, afterEach, vi} from 'vitest';
+import {describe, it, expect, afterEach, beforeAll, vi} from 'vitest';
 import {useRuntimeConfig} from '#app';
 
 import {resolveLocale} from '../../../src/runtime/utils/locale';
@@ -22,8 +22,13 @@ vi.mock('#app', async () => {
 });
 
 describe('resolveLocale', () => {
-    const config = useRuntimeConfig();
-    const originalLocale = config.public.croct.defaultPreferredLocale;
+    let config: ReturnType<typeof useRuntimeConfig>;
+    let originalLocale: string;
+
+    beforeAll(() => {
+        config = useRuntimeConfig();
+        originalLocale = config.public.croct.defaultPreferredLocale;
+    });
 
     afterEach(() => {
         config.public.croct.defaultPreferredLocale = originalLocale;

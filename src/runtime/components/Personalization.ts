@@ -31,7 +31,7 @@ export default defineComponent({
         });
 
         return () => {
-            if (error.value !== null) {
+            if (error.value !== null && error.value !== undefined) {
                 return slots.error?.({error: error.value});
             }
 
