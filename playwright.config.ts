@@ -28,6 +28,7 @@ export default defineConfig({
                 NUXT_PUBLIC_CROCT_BASE_ENDPOINT_URL: MOCK_SERVER_URL,
                 NUXT_CROCT_API_KEY: DEFAULT_CREDENTIALS.apiKey,
                 NUXT_CROCT_DISABLE_USER_TOKEN_AUTHENTICATION: 'true',
+                NUXT_CROCT_SERVER_TIMING: 'true',
             },
         },
     ],

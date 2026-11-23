@@ -34,6 +34,7 @@ export default defineConfig(
             'src/module.ts',
             'src/runtime/plugin.ts',
             'src/runtime/server/middleware/**/*.ts',
+            'src/runtime/server/plugins/**/*.ts',
             'src/runtime/server/api/**/*.ts',
             'src/runtime/components/**/*.ts',
         ],

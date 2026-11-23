@@ -3,6 +3,7 @@ import {
     defineNuxtModule,
     addPlugin,
     addServerHandler,
+    addServerPlugin,
     addImportsDir,
     addServerImportsDir,
     addTemplate,
@@ -29,6 +30,7 @@ export default defineNuxtModule<CroctModuleOptions>({
         defaultPreferredLocale: '',
         disableUserTokenAuthentication: false,
         tokenDuration: DEFAULT_TOKEN_DURATION,
+        serverTiming: false,
     },
     setup: function (options: CroctModuleOptions, nuxt: Nuxt) {
         const resolver = createResolver(import.meta.url);
@@ -64,6 +66,7 @@ export default defineNuxtModule<CroctModuleOptions>({
             apiKey: '',
             disableUserTokenAuthentication: options.disableUserTokenAuthentication ?? false,
             tokenDuration: options.tokenDuration ?? DEFAULT_TOKEN_DURATION,
+            serverTiming: options.serverTiming ?? false,
         };
 
         const appResolver = createResolver(nuxt.options.rootDir);
@@ -94,6 +97,8 @@ export default defineNuxtModule<CroctModuleOptions>({
         nitroOptions.alias['#croct/client-options'] = clientOptionsPath;
 
         addPlugin(resolver.resolve('./runtime/plugin'));
+
+        addServerPlugin(resolver.resolve('./runtime/server/plugins/serverTiming'));
 
         addServerHandler({
             handler: resolver.resolve('./runtime/server/middleware/croct'),
