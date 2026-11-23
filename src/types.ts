@@ -18,6 +18,7 @@ export type CroctModuleOptions = {
     },
     disableUserTokenAuthentication?: boolean,
     tokenDuration?: number,
+    serverTiming?: boolean,
     localeResolver?: string,
     userIdResolver?: string,
     credentialsResolver?: string,
@@ -47,6 +48,7 @@ export type CroctPrivateConfig = {
     apiKey: string,
     disableUserTokenAuthentication: boolean,
     tokenDuration: number,
+    serverTiming: boolean,
 };
 
 export type CroctRequestContext = {

@@ -45,6 +45,9 @@ test.describe('Prerendering with Croct', () => {
             // The Croct middleware runs on every request for a dynamic route.
             expect(response.headers()['set-cookie']).toBeDefined();
 
+            // Server-Timing is opt-in and omitted when not enabled.
+            expect(response.headers()['server-timing']).toBeUndefined();
+
             // The personalized content is already present in the initial HTML.
             expect(html).toContain('Mock Headline');
         });

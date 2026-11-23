@@ -7,6 +7,7 @@ import {EvaluationContext} from '@croct/sdk/evaluator';
 import {useEvent, useRuntimeConfig} from '#imports';
 import {urlSanitizer} from '#croct/client-options';
 import {getApiKey} from '../utils/security';
+import {startTiming} from '../utils/serverTiming';
 
 export type EvaluationOptions<T extends JsonValue = JsonValue> = Omit<BaseEvaluationOptions<T>, 'apiKey' | 'appId'>;
 
@@ -58,5 +59,5 @@ export async function evaluate<T extends JsonValue>(
             },
             {urlSanitizer: urlSanitizer},
         ),
-    });
+    }).finally(startTiming('Croct evaluate'));
 }

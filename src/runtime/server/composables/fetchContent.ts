@@ -13,6 +13,7 @@ import {ConsoleLogger} from '@croct/sdk/logging/consoleLogger';
 import {useEvent, useRuntimeConfig} from '#imports';
 import {urlSanitizer} from '#croct/client-options';
 import {getApiKey} from '../utils/security';
+import {startTiming} from '../utils/serverTiming';
 
 export type DynamicContentOptions<T extends JsonObject = JsonObject> = Omit<DynamicOptions<T>, 'apiKey' | 'appId'>;
 
@@ -65,7 +66,7 @@ export async function fetchContent<
             ...commonOptions,
             ...rest,
             ...(preferredLocale !== undefined ? {preferredLocale: preferredLocale} : {}),
-        });
+        }).finally(startTiming(`Croct fetch ${slotId}`));
     }
 
     const {context: providedContext} = rest as {context?: EvaluationContext};
@@ -95,5 +96,5 @@ export async function fetchContent<
             },
             {urlSanitizer: urlSanitizer},
         ),
-    });
+    }).finally(startTiming(`Croct fetch ${slotId}`));
 }
